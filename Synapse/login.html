@@ -85,10 +85,14 @@
                     </div>
                     <p class="text-sm text-gray-400">Welcome back, <span id="display-email"></span></p>
                 </div>
-                <button id="logout-btn" class="flex items-center space-x-2 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors pb-1">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span class="hidden sm:inline">Logout</span>
-                </button>
+                <div class="flex items-center gap-4">
+                    <div id="notification-bell-container"></div>
+
+                    <button id="logout-btn" class="flex items-center space-x-2 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors pb-1">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Logout</span>
+                    </button>
+                </div>
             </div>
 
             <div class="bg-gray-800 py-8 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700">
@@ -157,6 +161,7 @@
     </div>
 
     <script type="module">
+        import { renderNotificationBell } from "./src/notification/notification-bell.js";
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { 
             getAuth, 
@@ -187,6 +192,7 @@
         const analytics = getAnalytics(app);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        window.db = db;
 
         lucide.createIcons();
         let isLoginMode = true;
@@ -211,7 +217,9 @@
             if (user) {
                 document.getElementById('display-email').innerText = user.email;
                 showView('dashboard');
-                
+
+                renderNotificationBell(user.uid);
+
                 try {
                     const userDocRef = doc(db, 'users', user.uid);
                     const docSnap = await getDoc(userDocRef);
