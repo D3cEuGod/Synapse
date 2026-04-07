@@ -20,7 +20,7 @@
     <div id="view-app" class="hidden flex-col flex-grow w-full">
         <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-4 text-[#5f9f87]">
-                <a href="login.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
+                <a href="peerSupport.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
                     <i data-lucide="chevron-left" class="w-6 h-6"></i>
                 </a>
                 <div class="flex items-center space-x-2">
@@ -49,7 +49,7 @@
                     <div>
                         <h2 class="text-2xl font-bold text-white mb-1">Manage Ambassador Availability</h2>
                         <p class="text-sm text-gray-400">
-                            Create and manage your wellbeing support time slots. Only ambassadors can access this page.
+                            Create availability slots and manage incoming support requests.
                         </p>
                     </div>
                 </div>
@@ -57,7 +57,7 @@
 
             <div id="message-box" class="hidden mb-6 rounded-lg border px-4 py-3 text-sm"></div>
 
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
                     <p class="text-sm text-gray-400">Available slots</p>
                     <p id="available-count" class="text-2xl font-bold text-white mt-1">0</p>
@@ -65,6 +65,10 @@
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
                     <p class="text-sm text-gray-400">Booked slots</p>
                     <p id="booked-count" class="text-2xl font-bold text-white mt-1">0</p>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
+                    <p class="text-sm text-gray-400">Pending requests</p>
+                    <p id="pending-count" class="text-2xl font-bold text-white mt-1">0</p>
                 </div>
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
                     <p class="text-sm text-gray-400">Total slots</p>
@@ -125,6 +129,7 @@
                             <h4 class="text-sm font-semibold text-white mb-2">Rules</h4>
                             <ul class="text-sm text-gray-400 space-y-2">
                                 <li>• End time must be after start time</li>
+                                <li>• Minimum slot length is 30 minutes</li>
                                 <li>• Overlapping slots are not allowed</li>
                                 <li>• Slots are created only for the logged-in ambassador</li>
                             </ul>
@@ -132,7 +137,7 @@
                     </div>
                 </div>
 
-                <div class="xl:col-span-2">
+                <div class="xl:col-span-2 space-y-6">
                     <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
                         <div class="flex flex-col md:flex-row md:items-end gap-4 mb-5">
                             <div class="flex-1">
@@ -176,6 +181,28 @@
 
                         <div id="slots-list" class="space-y-3"></div>
                     </div>
+
+                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-white">Incoming support requests</h3>
+                                <p class="text-sm text-gray-400">Accept or decline requests assigned to you.</p>
+                            </div>
+                            <button
+                                id="refresh-requests-btn"
+                                type="button"
+                                class="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors text-sm"
+                            >
+                                Refresh Requests
+                            </button>
+                        </div>
+
+                        <div id="requests-loading" class="hidden text-sm text-gray-400 mb-4">
+                            Loading incoming requests...
+                        </div>
+
+                        <div id="requests-list" class="space-y-3"></div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -198,6 +225,7 @@
             getDocs,
             addDoc,
             deleteDoc,
+            updateDoc,
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -217,10 +245,13 @@
         let currentUser = null;
         let currentUserProfile = null;
         let mySlots = [];
+        let myRequests = [];
 
         const messageBox = document.getElementById("message-box");
         const slotsList = document.getElementById("slots-list");
         const slotsLoading = document.getElementById("slots-loading");
+        const requestsLoading = document.getElementById("requests-loading");
+        const requestsList = document.getElementById("requests-list");
         const filterDateInput = document.getElementById("filter-date");
 
         function showMessage(message, type = "success") {
@@ -240,6 +271,11 @@
             } else {
                 messageBox.classList.add("bg-green-900/30", "border", "border-green-800/50", "text-green-300");
             }
+
+            setTimeout(() => {
+                messageBox.classList.add("hidden");
+                messageBox.textContent = "";
+            }, 3000);
         }
 
         function clearMessage() {
@@ -253,6 +289,14 @@
             const month = String(today.getMonth() + 1).padStart(2, "0");
             const day = String(today.getDate()).padStart(2, "0");
             return `${year}-${month}-${day}`;
+        }
+
+        function formatDateDisplay(dateString) {
+            if (!dateString || !dateString.includes("-")) {
+                return dateString || "";
+            }
+            const [year, month, day] = dateString.split("-");
+            return `${day}/${month}/${year}`;
         }
 
         function getDisplayName(profile, fallbackEmail) {
@@ -277,25 +321,45 @@
             return false;
         }
 
-        function updateStats(filteredSlots = null) {
-            const source = filteredSlots || mySlots;
-            const availableCount = source.filter(slot => slot.status === "AVAILABLE").length;
-            const bookedCount = source.filter(slot => slot.status === "BOOKED").length;
-            const totalCount = source.length;
+        function hasSlotStarted(date, startTime) {
+            if (!date || !startTime) {
+                return false;
+            }
 
-            document.getElementById("available-count").textContent = availableCount;
-            document.getElementById("booked-count").textContent = bookedCount;
-            document.getElementById("total-count").textContent = totalCount;
+            const slotStart = new Date(`${date}T${startTime}:00`);
+            return new Date() >= slotStart;
         }
 
         function getStatusBadge(status) {
             if (status === "AVAILABLE") {
                 return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-900/30 text-green-300 border border-green-800/50">AVAILABLE</span>`;
             }
+            if (status === "PENDING") {
+                return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-800/50">PENDING</span>`;
+            }
             if (status === "BOOKED") {
-                return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-900/30 text-yellow-300 border border-yellow-800/50">BOOKED</span>`;
+                return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/30 text-blue-300 border border-blue-800/50">BOOKED</span>`;
+            }
+            if (status === "DECLINED") {
+                return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50">DECLINED</span>`;
+            }
+            if (status === "CANCELLED") {
+                return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50">CANCELLED</span>`;
             }
             return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-300 border border-gray-600">${status}</span>`;
+        }
+
+        function updateStats(filteredSlots = null) {
+            const source = filteredSlots || mySlots;
+            const availableCount = source.filter(slot => slot.status === "AVAILABLE").length;
+            const bookedCount = source.filter(slot => slot.status === "BOOKED").length;
+            const totalCount = source.length;
+            const pendingCount = myRequests.filter(request => request.status === "PENDING").length;
+
+            document.getElementById("available-count").textContent = availableCount;
+            document.getElementById("booked-count").textContent = bookedCount;
+            document.getElementById("total-count").textContent = totalCount;
+            document.getElementById("pending-count").textContent = pendingCount;
         }
 
         function renderSlots() {
@@ -324,7 +388,7 @@
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <div>
                             <div class="flex items-center gap-3 mb-2">
-                                <p class="font-semibold text-white">${slot.date}</p>
+                                <p class="font-semibold text-white">${formatDateDisplay(slot.date)}</p>
                                 ${getStatusBadge(slot.status)}
                             </div>
                             <p class="text-sm text-gray-400">${slot.startTime} - ${slot.endTime}</p>
@@ -352,6 +416,55 @@
             `).join("");
         }
 
+        function renderRequests() {
+            updateStats();
+
+            if (myRequests.length === 0) {
+                requestsList.innerHTML = `
+                    <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
+                        No incoming support requests yet.
+                    </div>
+                `;
+                return;
+            }
+
+            requestsList.innerHTML = myRequests.map(request => `
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <p class="font-semibold text-white">${request.employeeName}</p>
+                                ${getStatusBadge(request.status)}
+                            </div>
+                            <p class="text-sm text-gray-400">${request.employeeEmail}</p>
+                            <p class="text-sm text-gray-400 mt-1">${formatDateDisplay(request.date)}</p>
+                            <p class="text-sm text-gray-400">${request.startTime} - ${request.endTime}</p>
+                            <p class="text-sm text-gray-300 mt-2">${request.message || "No message provided."}</p>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            ${request.status === "PENDING" ? `
+                                <button
+                                    class="accept-request-btn px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white text-sm transition-colors"
+                                    data-request-id="${request.id}"
+                                    data-slot-id="${request.slotId}"
+                                >
+                                    Accept
+                                </button>
+                                <button
+                                    class="decline-request-btn px-4 py-2 rounded-lg border border-red-700 text-red-300 hover:bg-red-900/30 text-sm transition-colors"
+                                    data-request-id="${request.id}"
+                                    data-slot-id="${request.slotId}"
+                                >
+                                    Decline
+                                </button>
+                            ` : ""}
+                        </div>
+                    </div>
+                </div>
+            `).join("");
+        }
+
         async function getCurrentUserProfile(uid) {
             const userRef = doc(db, "users", uid);
             const userSnap = await getDoc(userRef);
@@ -361,6 +474,36 @@
             }
 
             return userSnap.data();
+        }
+
+        async function expireOutdatedPendingRequests() {
+            try {
+                const pendingRequestsQuery = query(
+                    collection(db, "supportRequests"),
+                    where("ambassadorId", "==", currentUser.uid),
+                    where("status", "==", "PENDING")
+                );
+
+                const snapshot = await getDocs(pendingRequestsQuery);
+
+                for (const requestDoc of snapshot.docs) {
+                    const data = requestDoc.data();
+
+                    if (hasSlotStarted(data.date, data.startTime)) {
+                        await updateDoc(doc(db, "supportRequests", requestDoc.id), {
+                            status: "DECLINED"
+                        });
+
+                        if (data.slotId) {
+                            await updateDoc(doc(db, "availabilitySlots", data.slotId), {
+                                status: "DECLINED"
+                            });
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Error expiring outdated pending requests:", error);
+            }
         }
 
         async function loadMySlots() {
@@ -378,7 +521,8 @@
 
                 snapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    slots.push({
+
+                    const slot = {
                         id: docSnap.id,
                         ambassadorId: data.ambassadorId || "",
                         ambassadorName: data.ambassadorName || "",
@@ -386,7 +530,11 @@
                         startTime: data.startTime || "",
                         endTime: data.endTime || "",
                         status: data.status || "AVAILABLE"
-                    });
+                    };
+
+                    if (slot.status !== "DECLINED") {
+                        slots.push(slot);
+                    }
                 });
 
                 slots.sort((a, b) => {
@@ -403,6 +551,54 @@
             }
         }
 
+        async function loadMyRequests() {
+            requestsLoading.classList.remove("hidden");
+            requestsList.innerHTML = "";
+
+            try {
+                const requestsQuery = query(
+                    collection(db, "supportRequests"),
+                    where("ambassadorId", "==", currentUser.uid)
+                );
+
+                const snapshot = await getDocs(requestsQuery);
+                const requests = [];
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    requests.push({
+                        id: docSnap.id,
+                        employeeId: data.employeeId || "",
+                        employeeName: data.employeeName || "Unknown Employee",
+                        employeeEmail: data.employeeEmail || "",
+                        ambassadorId: data.ambassadorId || "",
+                        ambassadorName: data.ambassadorName || "",
+                        slotId: data.slotId || "",
+                        date: data.date || "",
+                        startTime: data.startTime || "",
+                        endTime: data.endTime || "",
+                        message: data.message || "",
+                        status: data.status || "PENDING",
+                        createdAt: data.createdAt || null
+                    });
+                });
+
+                requests.sort((a, b) => {
+                    const aTime = a.createdAt?.seconds || 0;
+                    const bTime = b.createdAt?.seconds || 0;
+                    return bTime - aTime;
+                });
+
+                myRequests = requests;
+                renderRequests();
+            } catch (error) {
+                console.error(error);
+                showMessage("Could not load incoming requests.", "error");
+            } finally {
+                requestsLoading.classList.add("hidden");
+            }
+        }
+
         function hasOverlap(date, startTime, endTime) {
             return mySlots.some(slot => {
                 if (slot.date !== date) {
@@ -410,6 +606,16 @@
                 }
                 return !(endTime <= slot.startTime || startTime >= slot.endTime);
             });
+        }
+
+        function getMinutesBetween(startTime, endTime) {
+            const [startHour, startMinute] = startTime.split(":").map(Number);
+            const [endHour, endMinute] = endTime.split(":").map(Number);
+
+            const startTotal = startHour * 60 + startMinute;
+            const endTotal = endHour * 60 + endMinute;
+
+            return endTotal - startTotal;
         }
 
         async function createAvailabilitySlot(event) {
@@ -430,8 +636,24 @@
                 return;
             }
 
+            const now = new Date();
+            const currentDate = getCurrentDateString();
+            const currentTime = now.toTimeString().slice(0, 5);
+
+            if (date === currentDate && startTime <= currentTime) {
+                showMessage("You cannot create a slot in the past.", "error");
+                return;
+            }
+
             if (startTime >= endTime) {
                 showMessage("End time must be after start time.", "error");
+                return;
+            }
+
+            const durationMinutes = getMinutesBetween(startTime, endTime);
+
+            if (durationMinutes < 30) {
+                showMessage("Availability slots must be at least 30 minutes long.", "error");
                 return;
             }
 
@@ -484,6 +706,48 @@
             }
         }
 
+        async function acceptRequest(requestId, slotId) {
+            clearMessage();
+
+            try {
+                await updateDoc(doc(db, "supportRequests", requestId), {
+                    status: "ACCEPTED"
+                });
+
+                await updateDoc(doc(db, "availabilitySlots", slotId), {
+                    status: "BOOKED"
+                });
+
+                showMessage("Request accepted.");
+                await loadMyRequests();
+                await loadMySlots();
+            } catch (error) {
+                console.error(error);
+                showMessage("Could not accept request.", "error");
+            }
+        }
+
+        async function declineRequest(requestId, slotId) {
+            clearMessage();
+
+            try {
+                await updateDoc(doc(db, "supportRequests", requestId), {
+                    status: "DECLINED"
+                });
+
+                await updateDoc(doc(db, "availabilitySlots", slotId), {
+                    status: "AVAILABLE"
+                });
+
+                showMessage("Request declined.");
+                await loadMyRequests();
+                await loadMySlots();
+            } catch (error) {
+                console.error(error);
+                showMessage("Could not decline request.", "error");
+            }
+        }
+
         function bindEvents() {
             document.getElementById("logout-btn").addEventListener("click", async () => {
                 await signOut(auth);
@@ -497,6 +761,13 @@
                 await loadMySlots();
             });
 
+            document.getElementById("refresh-requests-btn").addEventListener("click", async () => {
+                clearMessage();
+                await expireOutdatedPendingRequests();
+                await loadMyRequests();
+                await loadMySlots();
+            });
+
             document.getElementById("clear-filters-btn").addEventListener("click", () => {
                 filterDateInput.value = "";
                 renderSlots();
@@ -505,9 +776,22 @@
             filterDateInput.addEventListener("change", renderSlots);
 
             document.addEventListener("click", async (event) => {
-                const button = event.target.closest(".delete-slot-btn");
-                if (!button) return;
-                await deleteAvailabilitySlot(button.dataset.slotId);
+                const deleteButton = event.target.closest(".delete-slot-btn");
+                if (deleteButton) {
+                    await deleteAvailabilitySlot(deleteButton.dataset.slotId);
+                    return;
+                }
+
+                const acceptButton = event.target.closest(".accept-request-btn");
+                if (acceptButton) {
+                    await acceptRequest(acceptButton.dataset.requestId, acceptButton.dataset.slotId);
+                    return;
+                }
+
+                const declineButton = event.target.closest(".decline-request-btn");
+                if (declineButton) {
+                    await declineRequest(declineButton.dataset.requestId, declineButton.dataset.slotId);
+                }
             });
         }
 
@@ -523,6 +807,11 @@
                 currentUser = user;
                 currentUserProfile = await getCurrentUserProfile(user.uid);
 
+                if (!isAmbassador(currentUserProfile)) {
+                    window.location.href = "peerSupport.html";
+                    return;
+                }
+
                 document.getElementById("nav-email").innerText = user.email;
                 document.getElementById("view-loading").classList.add("hidden");
 
@@ -530,14 +819,10 @@
                 appView.classList.remove("hidden");
                 appView.classList.add("flex");
 
-                if (!isAmbassador(currentUserProfile)) {
-                    alert("Access denied. This page is for ambassadors only.");
-                    window.location.href = "peerSupport.html";
-                    return;
-                }
-
                 bindEvents();
+                await expireOutdatedPendingRequests();
                 await loadMySlots();
+                await loadMyRequests();
             } catch (error) {
                 console.error(error);
                 document.getElementById("view-loading").classList.add("hidden");
