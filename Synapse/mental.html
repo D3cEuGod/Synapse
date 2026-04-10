@@ -111,6 +111,61 @@
             </div>
 
 
+            <div id="tab-mood" class="panel-appear">
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 mb-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-lg font-bold text-white">How are you feeling today?</h3>
+                            <p class="text-sm text-gray-400" id="today-date-label"></p>
+                        </div>
+                        <div id="mood-saved-badge" class="hidden items-center space-x-1 text-xs font-medium text-emerald-400 bg-emerald-900/30 border border-emerald-700/50 px-3 py-1.5 rounded-full">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                            <span>Saved</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-5 gap-3 mb-6" id="mood-buttons">
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="1" onclick="selectMood(1)">
+                            <span class="text-3xl mb-1">😞</span>
+                            <span class="text-xs text-gray-400 font-medium">Very Low</span>
+                            <span class="text-xs text-gray-600 mt-0.5">1</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="2" onclick="selectMood(2)">
+                            <span class="text-3xl mb-1">😔</span>
+                            <span class="text-xs text-gray-400 font-medium">Low</span>
+                            <span class="text-xs text-gray-600 mt-0.5">2</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="3" onclick="selectMood(3)">
+                            <span class="text-3xl mb-1">😐</span>
+                            <span class="text-xs text-gray-400 font-medium">Neutral</span>
+                            <span class="text-xs text-gray-600 mt-0.5">3</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="4" onclick="selectMood(4)">
+                            <span class="text-3xl mb-1">🙂</span>
+                            <span class="text-xs text-gray-400 font-medium">Good</span>
+                            <span class="text-xs text-gray-600 mt-0.5">4</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="5" onclick="selectMood(5)">
+                            <span class="text-3xl mb-1">😊</span>
+                            <span class="text-xs text-gray-400 font-medium">Great</span>
+                            <span class="text-xs text-gray-600 mt-0.5">5</span>
+                        </button>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-1.5">Optional note <span class="text-gray-600">(how's your day been?)</span></label>
+                        <textarea id="mood-note" rows="2" placeholder="e.g. Feeling stressed about upcoming deadline..." class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#5f9f87] focus:border-[#5f9f87] resize-none"></textarea>
+                    </div>
+
+                    <button id="save-mood-btn" onclick="saveMood()" disabled class="w-full py-2.5 px-4 bg-[#177a64] hover:bg-[#0b4533] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors text-sm">
+                        Save Today's Mood
+                    </button>
+
+                    <div id="mood-feedback" class="hidden mt-4 p-4 rounded-xl border text-sm"></div>
+                </div>
+
+
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
