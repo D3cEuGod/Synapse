@@ -6,6 +6,7 @@
   <title>Synapse Analytics</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     .hidden { display: none !important; }
   </style>
@@ -151,6 +152,18 @@
 
       </div>
 
+      <!-- Chart Section -->
+      <div class="bg-gray-800 py-6 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700 mb-6">
+        <div class="flex items-center space-x-2 mb-4">
+          <i data-lucide="pie-chart" class="w-5 h-5 text-[#5f9f87]"></i>
+          <h2 class="text-lg font-semibold text-white">Mood distribution</h2>
+        </div>
+
+        <div class="w-full max-w-md mx-auto">
+          <canvas id="mood-distribution-chart" class="w-full h-64"></canvas>
+        </div>
+      </div>
+
       <!-- Export Section -->
       <div class="bg-gray-800 py-6 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -188,6 +201,8 @@
       exportReportAsCSV
     } from "./src/hrdashboard/export-service.js";
 
+    let moodChart = null;
+    
     const firebaseConfig = {
       apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
       authDomain: "synapse21.firebaseapp.com",
@@ -223,6 +238,46 @@
       document.getElementById("end-date").value = today.toISOString().split("T")[0];
       document.getElementById("start-date").value = prior.toISOString().split("T")[0];
     }
+
+    function renderMoodDistributionChart(moodStats){
+      const ctx = document.getElementById('mood-distribution-chart').getContext('2d');
+      if(moodChart) {
+        moodChart.destroy();
+      }
+
+      moodChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Low Mood", "Neutral Mood", "High Mood"],
+          datasets: [{
+            data: [
+              moodStats.lowMoodCount,
+              moodStats.neutralMoodCount,
+              moodStats.highMoodCount
+            ],
+            backgroundColor: [
+              "#f59e0b",
+              "#60a5fa",
+              "#34d399"
+            ],
+            borderColor: "#1f2937",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#e5e7eb"
+              }
+            }
+          }
+        }
+      });
+
+
+    }
   
     async function loadReport() {
       const startDate = document.getElementById("start-date").value;
@@ -247,6 +302,8 @@
   
       document.getElementById("low-mood-count").innerText =
         report.moodStats.lowMoodCount;
+
+      renderMoodDistributionChart(report.moodStats);
     }
   
     document.getElementById("load-report-btn").addEventListener("click", loadReport);
