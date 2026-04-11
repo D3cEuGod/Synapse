@@ -1,21 +1,21 @@
 
 
-export function exportReportAsCSV(){
+export function exportReportAsCSV(report){
     const rows = [
         ["HR Analytics Report"],
         ["Start Date",document.getElementById("start-date").value],
         ["End Date",document.getElementById("end-date").value],
         [],
         ["Metric","Value"],
-        ["Total Self-Assessments", document.getElementById("total-self-assessments").innerText],
-        ["Average Assessment Score", document.getElementById("avg-self-score").innerText],
-        ["High Risk Count", document.getElementById("high-risk-count").innerText],
+        ["Total Self-Assessments", report.selfAssessmentStats.totalSelfAssessments],
+        ["Average Assessment Score", report.selfAssessmentStats.averageScore],
+        ["High Risk Count", report.selfAssessmentStats.highRiskCount],
         [],
-        ["Total Mood Entries", document.getElementById("total-mood-entries").innerText],
-        ["Average Mood Level", document.getElementById("avg-mood").innerText],
-        ["Low Mood Count", document.getElementById("low-mood-count").innerText]
-        //["Neutral Mood Count", document.getElementById("neutralMoodCount").innerText],
-        //["High Mood Count", document.getElementById("highMoodCount").innerText]
+        ["Total Mood Entries", report.moodStats.totalMoodEntries],
+        ["Average Mood Level", report.moodStats.averageMood],
+        ["Low Mood Count", report.moodStats.lowMoodCount],
+        ["Neutral Mood Count", report.moodStats.neutralMoodCount],
+        ["High Mood Count", report.moodStats.highMoodCount]
     ];
 
     const csvContent = rows.map(row => row.join(",")).join("\n");

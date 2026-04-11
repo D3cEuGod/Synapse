@@ -150,6 +150,22 @@
           <p id="low-mood-count" class="text-3xl font-bold text-white">-</p>
         </div>
 
+        <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-medium text-gray-400">Neutral Mood Entries</h3>
+            <i data-lucide="frown" class="w-5 h-5 text-amber-400"></i>
+          </div>
+          <p id="neutral-mood-count" class="text-3xl font-bold text-white">-</p>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-medium text-gray-400">High mood entries ( > 3)</h3>
+            <i data-lucide="frown" class="w-5 h-5 text-amber-400"></i>
+          </div>
+          <p id="high-mood-count" class="text-3xl font-bold text-white">-</p>
+        </div>
+
       </div>
 
       <!-- Chart Section -->
@@ -202,6 +218,7 @@
     } from "./src/hrdashboard/export-service.js";
 
     let moodChart = null;
+    let currentReport = null;
     
     const firebaseConfig = {
       apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
@@ -284,6 +301,7 @@
       const endDate = document.getElementById("end-date").value;
   
       const report = await getHRDashboard(db, startDate, endDate);
+      currentReport = report;
   
       document.getElementById("total-self-assessments").innerText =
         report.selfAssessmentStats.totalSelfAssessments;
@@ -303,12 +321,18 @@
       document.getElementById("low-mood-count").innerText =
         report.moodStats.lowMoodCount;
 
+      document.getElementById("neutral-mood-count").innerText =
+        report.moodStats.neutralMoodCount;
+        
+      document.getElementById("high-mood-count").innerText =
+        report.moodStats.highMoodCount;
+
       renderMoodDistributionChart(report.moodStats);
     }
   
     document.getElementById("load-report-btn").addEventListener("click", loadReport);
 
-    document.getElementById("export-csv-btn").addEventListener("click", exportReportAsCSV);
+    document.getElementById("export-csv-btn").addEventListener("click", () => exportReportAsCSV(currentReport));
   
     document.getElementById("logout-btn").addEventListener("click", async () => {
       await signOut(auth);
