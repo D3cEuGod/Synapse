@@ -46,15 +46,15 @@ export async function getMoodStats(db, startDate, endDate){
     const averageMood = total > 0 ? filtered.reduce((sum, entry) => sum + (entry.moodLevel || 0), 0) / total : 0;
 
     const lowMoodCount = filtered.filter(entry => entry.moodLevel <= 2).length;
-    const neutralMoodCount = filtered.filter(entry => entry.moodLevel === 3).length;
-    const highMoodCount = filtered.filter(entry => entry.moodLevel >= 4).length;
+    //const neutralMoodCount = filtered.filter(entry => entry.moodLevel === 3).length;
+    //const highMoodCount = filtered.filter(entry => entry.moodLevel >= 4).length;
 
     return{
         totalMoodEntries: total,
         averageMood: Number(averageMood.toFixed(2)),
-        lowMoodCount,
-        neutralMoodCount,
-        highMoodCount
+        lowMoodCount
+        //neutralMoodCount,
+        //highMoodCount
     };
 }
 

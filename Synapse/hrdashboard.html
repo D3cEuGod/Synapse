@@ -178,14 +178,16 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-  
-    console.log("hello");
-    
+      
     import {
       userCanAccessHRDashboard,
       getHRDashboard
     } from "./src/hrdashboard/hrdashboard.js";
   
+    import {
+      exportReportAsCSV
+    } from "./src/hrdashboard/export-service.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
       authDomain: "synapse21.firebaseapp.com",
@@ -248,6 +250,8 @@
     }
   
     document.getElementById("load-report-btn").addEventListener("click", loadReport);
+
+    document.getElementById("export-csv-btn").addEventListener("click", exportReportAsCSV);
   
     document.getElementById("logout-btn").addEventListener("click", async () => {
       await signOut(auth);
