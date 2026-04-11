@@ -50,28 +50,32 @@ export async function exportReportAsPDF(report) {
     };
 
     // Self-assessment stats
-    sectionHeader("Self-Assessment Statistics");
-    statRow("Total Self-Assessments", report.selfAssessmentStats.totalSelfAssessments);
-    statRow("Average Assessment Score", report.selfAssessmentStats.averageScore);
-    //statRow("High Risk Count", report.selfAssessmentStats.highRiskCount);
-    y += 12;
+    if (report.selfAssessmentStats) {
+        sectionHeader("Self-Assessment Statistics");
+        statRow("Total Self-Assessments", report.selfAssessmentStats.totalSelfAssessments);
+        statRow("Average Assessment Score", report.selfAssessmentStats.averageScore);
+        //statRow("High Risk Count", report.selfAssessmentStats.highRiskCount);
+        y += 12;
+    }
 
     // Mood stats
-    sectionHeader("Mood Statistics");
-    statRow("Total Mood Entries", report.moodStats.totalMoodEntries);
-    statRow("Average Mood Level", report.moodStats.averageMood);
-    statRow("Low Mood Count (<= 2)", report.moodStats.lowMoodCount);
-    statRow("Neutral Mood Count (= 3)", report.moodStats.neutralMoodCount);
-    statRow("High Mood Count (>= 4)", report.moodStats.highMoodCount);
-    y += 20;
+    if (report.moodStats) {
+        sectionHeader("Mood Statistics");
+        statRow("Total Mood Entries", report.moodStats.totalMoodEntries);
+        statRow("Average Mood Level", report.moodStats.averageMood);
+        statRow("Low Mood Count (<= 2)", report.moodStats.lowMoodCount);
+        statRow("Neutral Mood Count (= 3)", report.moodStats.neutralMoodCount);
+        statRow("High Mood Count (>= 4)", report.moodStats.highMoodCount);
+        y += 20;
 
-    // Mood distribution chart
-    const chartCanvas = document.getElementById("mood-distribution-chart");
-    if (chartCanvas) {
-        const canvasImage = await html2canvas(chartCanvas, { backgroundColor: "#1f2937", scale: 2 });
-        const imgData = canvasImage.toDataURL("image/png");
-        const imgHeight = (canvasImage.height / canvasImage.width) * contentWidth;
-        pdf.addImage(imgData, "PNG", margin, y, contentWidth, imgHeight);
+        // Mood distribution chart
+        const chartCanvas = document.getElementById("mood-distribution-chart");
+        if (chartCanvas) {
+            const canvasImage = await html2canvas(chartCanvas, { backgroundColor: "#1f2937", scale: 2 });
+            const imgData = canvasImage.toDataURL("image/png");
+            const imgHeight = (canvasImage.height / canvasImage.width) * contentWidth;
+            pdf.addImage(imgData, "PNG", margin, y, contentWidth, imgHeight);
+        }
     }
 
     pdf.save(`hr_analytics_${start}_to_${end}.pdf`);
@@ -86,16 +90,24 @@ export function exportReportAsCSV(report){
         ["Start Date", start],
         ["End Date", end],
         [],
-        ["Metric","Value"],
-        ["Total Self-Assessments", report.selfAssessmentStats.totalSelfAssessments],
-        ["Average Assessment Score", report.selfAssessmentStats.averageScore],
-        ["High Risk Count", report.selfAssessmentStats.highRiskCount],
+        ["Metric", "Value"],
+        ...(report.selfAssessmentStats ? [
+            ["Total Self-Assessments", report.selfAssessmentStats.totalSelfAssessments],
+            ["Average Assessment Score", report.selfAssessmentStats.averageScore],
+            //["High Risk Count", report.selfAssessmentStats.highRiskCount],
+        ] : [
+            ["Self-Assessment Data", "Insufficient data — hidden to protect employee privacy"]
+        ]),
         [],
-        ["Total Mood Entries", report.moodStats.totalMoodEntries],
-        ["Average Mood Level", report.moodStats.averageMood],
-        ["Low Mood Count", report.moodStats.lowMoodCount],
-        ["Neutral Mood Count", report.moodStats.neutralMoodCount],
-        ["High Mood Count", report.moodStats.highMoodCount]
+        ...(report.moodStats ? [
+            ["Total Mood Entries", report.moodStats.totalMoodEntries],
+            ["Average Mood Level", report.moodStats.averageMood],
+            ["Low Mood Count", report.moodStats.lowMoodCount],
+            ["Neutral Mood Count", report.moodStats.neutralMoodCount],
+            ["High Mood Count", report.moodStats.highMoodCount]
+        ] : [
+            ["Mood Data", "Insufficient data — hidden to protect employee privacy"]
+        ])
     ];
 
     const csvContent = rows.map(row => row.join(",")).join("\n");
