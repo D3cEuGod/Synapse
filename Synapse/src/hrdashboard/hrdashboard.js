@@ -12,7 +12,7 @@ export async function userCanAccessHRDashboard(db, user){
     return roles.includes("Administrator") || roles.includes("HR_Member");
 }
 
-export async function getSelfAssessments(db, startDate, endDate) {
+async function getSelfAssessments(db, startDate, endDate) {
   const snapshot = await getDocs(collection(db, "selfAssessments"));
   const assessments = snapshot.docs.map(doc => doc.data());
 
@@ -24,16 +24,16 @@ export async function getSelfAssessments(db, startDate, endDate) {
 
   const averageScore = total > 0 ? filtered.reduce((sum, a) => sum + (a.totalScore || 0), 0) / total : 0;
 
-  const highRiskCount = filtered.filter(a => a.riskLevel==="high").length;
+  //const highRiskCount = filtered.filter(a => a.riskLevel==="high").length;
 
   return {
     totalSelfAssessments: total,
-    averageScore: Number(averageScore.toFixed(2)),
-    highRiskCount
+    averageScore: Number(averageScore.toFixed(2))
+    //highRiskCount
   };
 }
 
-export async function getMoodStats(db, startDate, endDate){
+async function getMoodStats(db, startDate, endDate){
     const snapshot = await getDocs(collection(db, "moodEntries"));
     const moodEntries = snapshot.docs.map(doc => doc.data());
 
@@ -59,11 +59,10 @@ export async function getMoodStats(db, startDate, endDate){
 }
 
 export async function getHRDashboard(db, startDate, endDate){
-    const selfAssessmentStats = await getSelfAssessments(db, startDate, endDate);
-    const moodStats = await getMoodStats(db, startDate, endDate);
+    const [selfAssessmentStats, moodStats] = await Promise.all([
+        getSelfAssessments(db, startDate, endDate),
+        getMoodStats(db, startDate, endDate)
+    ]);
 
-    return{
-        selfAssessmentStats,
-        moodStats
-    };
+    return { selfAssessmentStats, moodStats };
 }
