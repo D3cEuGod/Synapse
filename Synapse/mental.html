@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .hidden { display: none !important; }
+
         /* Mood button states */
         .mood-btn { transition: all 0.2s ease; }
         .mood-btn.selected {
@@ -15,6 +16,7 @@
             box-shadow: 0 0 0 3px #5f9f87, 0 4px 20px rgba(95,159,135,0.35);
         }
         .mood-btn:hover:not(.selected) { transform: scale(1.06); }
+
         /* Question radio styling */
         .q-option input[type="radio"] { display: none; }
         .q-option label {
@@ -27,25 +29,35 @@
             background: #134e3a; border-color: #5f9f87; color: #a7f3d0; font-weight: 600;
         }
         .q-option label:hover { border-color: #5f9f87; color: #d1fae5; background: #1a2e26; }
+
         /* Progress bar animation */
         .progress-fill { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
         /* Tab active */
-        .tab-btn.active { background: #177a64; color: white; box-shadow: 0 2px 8px rgba(23,122,100,0.4); }
+        .tab-btn.active {
+            background: #177a64;
+            color: white;
+            box-shadow: 0 2px 8px rgba(23,122,100,0.4);
+        }
         .tab-btn { transition: all 0.2s ease; }
+
         /* Risk badge pulse */
         @keyframes risk-pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
             50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
         }
         .risk-high { animation: risk-pulse 2s infinite; }
+
         /* Mood history bar */
         .mood-bar { transition: height 0.5s ease; }
+
         /* Slide-in for panels */
         @keyframes slide-in {
             from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
         .panel-appear { animation: slide-in 0.3s ease forwards; }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
@@ -110,7 +122,6 @@
                 </button>
             </div>
 
-
             <div id="tab-mood" class="panel-appear">
 
                 <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 mb-6">
@@ -165,7 +176,6 @@
                     <div id="mood-feedback" class="hidden mt-4 p-4 rounded-xl border text-sm"></div>
                 </div>
 
-
                 <div id="consecutive-alert" class="hidden mb-6 p-4 bg-amber-900/30 border border-amber-700/60 rounded-2xl">
                     <div class="flex items-start space-x-3">
                         <div class="p-2 bg-amber-700/30 rounded-full mt-0.5">
@@ -181,8 +191,7 @@
                         </div>
                     </div>
                 </div>
-
-
+                
                 <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
                     <h3 class="text-base font-bold text-white mb-4">Last 7 Days</h3>
                     <div id="mood-history-chart" class="flex items-end justify-between space-x-2 h-24 mb-3">
@@ -194,14 +203,51 @@
                         <span id="mood-streak-label"></span>
                     </div>
                 </div>
+            </div> <div id="tab-assessment" class="hidden panel-appear">
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 mb-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="p-3 bg-[#177a64]/20 rounded-xl">
+                            <i data-lucide="clipboard-list" class="w-6 h-6 text-[#5f9f87]"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Workplace Wellbeing Questionnaire</h3>
+                            <p class="text-gray-400 text-sm mt-1">This short questionnaire helps identify your current wellbeing levels and suggests personalised resources. All responses are confidential.</p>
+                            <p class="text-xs text-gray-500 mt-2">Takes approximately 3–5 minutes &bull; 10 questions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6" id="assessment-form-container">
+                    <div id="assessment-progress-bar-wrap" class="mb-6">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2">
+                            <span>Progress</span>
+                            <span id="progress-label">0 / 10 answered</span>
+                        </div>
+                        <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div id="assessment-progress-bar" class="h-full bg-[#177a64] rounded-full progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <form id="assessment-form" class="space-y-6">
+                        </form>
+
+                    <div id="assessment-error" class="hidden mt-4 p-3 bg-red-900/30 text-red-400 text-sm rounded-lg border border-red-800/50 text-center"></div>
+
+                    <button id="submit-assessment-btn" onclick="submitAssessment()" class="mt-6 w-full py-2.5 px-4 bg-[#177a64] hover:bg-[#0b4533] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors text-sm">
+                        Submit Assessment
+                    </button>
+                </div>
+            </div> <div id="tab-insights" class="hidden panel-appear">
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 text-center">
+                    <p class="text-gray-500">Insights dashboard will be implemented in a future commit.</p>
+                </div>
             </div>
 
-
-    
-    <script type="module">
+        </main>
+    </div> <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
@@ -211,32 +257,319 @@
             messagingSenderId: "1026510421512",
             appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        window.db = db;
 
         lucide.createIcons();
 
-        onAuthStateChanged(auth, (user) => {
+        /* ============================================================
+           DATA
+        ============================================================ */
+        window.QUESTIONS = [
+            { id: "q1", text: "How often have you felt overwhelmed by your workload?" },
+            { id: "q2", text: "How often have you had difficulty concentrating on your tasks?" },
+            { id: "q3", text: "How often have you felt anxious or worried about work?" },
+            { id: "q4", text: "How often have you felt emotionally exhausted or burned out?" },
+            { id: "q5", text: "How often have you had difficulty sleeping because of work-related stress?" },
+            { id: "q6", text: "How often have you felt a lack of motivation or interest in your work?" },
+            { id: "q7", text: "How often have you felt isolated or disconnected from your colleagues?" },
+            { id: "q8", text: "How often have you experienced physical symptoms of stress (e.g. headaches, muscle tension, fatigue)?" },
+            { id: "q9", text: "How often have you felt unable to take proper breaks during the working day?" },
+            { id: "q10", text: "How often have you felt that work is negatively affecting your personal life or relationships?" }
+        ];
+
+        const SCORE_OPTIONS = [
+            { value: 0, label: "Not at all" },
+            { value: 1, label: "Several days" },
+            { value: 2, label: "More than half the days" },
+            { value: 3, label: "Nearly every day" }
+        ];
+
+        let currentUser = null;
+        let selectedMood = null;
+        let todayMoodData = null;
+        let answeredCount = 0;
+
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        /* ============================================================
+           AUTH & INITIALISATION
+        ============================================================ */
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
+                currentUser = user;
                 document.getElementById('nav-email').innerText = user.email;
                 document.getElementById('view-loading').classList.add('hidden');
+                
                 const appView = document.getElementById('view-app');
                 appView.classList.remove('hidden');
                 appView.classList.add('flex');
-                window.currentUser = user; 
+
+                document.getElementById('today-date-label').innerText = new Date().toLocaleDateString('en-GB', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                renderQuestionnaire();
+                
+                await loadTodayMood();
+                await loadMoodHistory();
+                await checkConsecutiveLowMood();
             } else {
-                window.location.href = 'login.html'; 
+                window.location.href = 'login.html';
             }
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'login.html';
-            });
+            signOut(auth).then(() => { window.location.href = 'login.html'; });
         });
+
+        /* ============================================================
+           TAB SWITCHING
+        ============================================================ */
+        window.switchTab = function(tab) {
+            ['mood', 'assessment', 'insights'].forEach(t => {
+                const panel = document.getElementById(`tab-${t}`);
+                const btn = document.querySelector(`[data-tab="${t}"]`);
+                if(panel) panel.classList.add('hidden');
+                if(btn) {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-gray-400');
+                }
+            });
+            
+            const activePanel = document.getElementById(`tab-${tab}`);
+            const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+            if(activePanel) {
+                activePanel.classList.remove('hidden');
+                activePanel.classList.add('panel-appear');
+            }
+            if(activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-gray-400');
+            }
+            lucide.createIcons();
+        };
+
+        /* ============================================================
+           DAILY MOOD TAB LOGIC
+        ============================================================ */
+        async function loadTodayMood() {
+            const today = getToday();
+            const docRef = doc(db, 'moodEntries', `${currentUser.uid}_${today}`);
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                todayMoodData = snap.data();
+                selectedMood = todayMoodData.moodLevel;
+                highlightMoodBtn(selectedMood);
+                document.getElementById('mood-note').value = todayMoodData.note || '';
+                document.getElementById('save-mood-btn').textContent = 'Update Today\'s Mood';
+                document.getElementById('save-mood-btn').disabled = false;
+                
+                const badge = document.getElementById('mood-saved-badge');
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+                lucide.createIcons();
+            }
+        }
+
+        window.selectMood = function(level) {
+            selectedMood = level;
+            highlightMoodBtn(level);
+            document.getElementById('save-mood-btn').disabled = false;
+        };
+
+        function highlightMoodBtn(level) {
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.style.borderColor = '';
+            });
+            const btn = document.querySelector(`.mood-btn[data-mood="${level}"]`);
+            if (btn) btn.classList.add('selected');
+        }
+
+        window.saveMood = async function() {
+            if (!selectedMood) return;
+            const today = getToday();
+            const note = document.getElementById('mood-note').value.trim();
+            const saveBtn = document.getElementById('save-mood-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const docRef = doc(db, 'moodEntries', `${currentUser.uid}_${today}`);
+                await setDoc(docRef, {
+                    employeeId: currentUser.uid,
+                    moodLevel: selectedMood,
+                    date: today,
+                    note: note,
+                    savedAt: new Date().toISOString()
+                });
+
+                saveBtn.textContent = 'Update Today\'s Mood';
+                saveBtn.disabled = false;
+                
+                const badge = document.getElementById('mood-saved-badge');
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+
+                const box = document.getElementById('mood-feedback');
+                box.className = `mt-4 p-3 rounded-xl border text-sm bg-[#177a64]/20 border-[#5f9f87]/50 text-[#8ee4d2]`;
+                box.textContent = "Mood saved successfully! Thank you for checking in.";
+                box.classList.remove('hidden');
+                
+                lucide.createIcons();
+                
+                // Refresh the chart and streak checking
+                await loadMoodHistory();
+                await checkConsecutiveLowMood();
+
+            } catch (err) {
+                console.error("Error saving mood:", err);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Today\'s Mood';
+            }
+        };
+
+        async function loadMoodHistory() {
+            const today = new Date();
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                days.push(d.toISOString().split('T')[0]);
+            }
+
+            const moodMap = {};
+            await Promise.all(days.map(async (dateStr) => {
+                const docRef = doc(db, 'moodEntries', `${currentUser.uid}_${dateStr}`);
+                const snap = await getDoc(docRef);
+                moodMap[dateStr] = snap.exists() ? snap.data().moodLevel : null;
+            }));
+
+            const chartEl = document.getElementById('mood-history-chart');
+            const labelsEl = document.getElementById('mood-history-labels');
+            if(!chartEl || !labelsEl) return;
+
+            const moodColors = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#3b82f6', 5: '#10b981' };
+            const moodEmoji = { 1: '😞', 2: '😔', 3: '😐', 4: '🙂', 5: '😊' };
+
+            chartEl.innerHTML = '';
+            labelsEl.innerHTML = '';
+
+            days.forEach(dateStr => {
+                const val = moodMap[dateStr];
+                const dayName = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' });
+                const heightPct = val ? (val / 5) * 100 : 0;
+
+                const barWrap = document.createElement('div');
+                barWrap.className = 'flex-1 flex flex-col items-center justify-end h-full';
+                if (val) {
+                    barWrap.innerHTML = `
+                        <span class="text-sm mb-1">${moodEmoji[val]}</span>
+                        <div class="w-full rounded-t-md transition-all duration-500 ease-out" style="height:${heightPct}%; background:${moodColors[val]}; min-height:4px;" title="Mood: ${val}"></div>
+                    `;
+                } else {
+                    barWrap.innerHTML = `<div class="w-full rounded-t-md bg-gray-700 opacity-30" style="height:10%"></div>`;
+                }
+                chartEl.appendChild(barWrap);
+
+                const labelEl = document.createElement('span');
+                labelEl.className = 'flex-1 text-center';
+                labelEl.textContent = dayName;
+                labelsEl.appendChild(labelEl);
+            });
+        }
+
+        async function checkConsecutiveLowMood() {
+            const today = new Date();
+            let consecutive = 0;
+
+            for (let i = 0; i < 14; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const snap = await getDoc(doc(db, 'moodEntries', `${currentUser.uid}_${dateStr}`));
+                if (snap.exists() && (snap.data().moodLevel === 1 || snap.data().moodLevel === 2)) {
+                    consecutive++;
+                } else {
+                    break;
+                }
+            }
+
+            const alertEl = document.getElementById('consecutive-alert');
+            if(alertEl) {
+                if (consecutive >= 14) {
+                    alertEl.classList.remove('hidden');
+                } else {
+                    alertEl.classList.add('hidden');
+                }
+            }
+
+            const streakLabel = document.getElementById('mood-streak-label');
+            if(streakLabel) {
+                if (consecutive >= 2) {
+                    streakLabel.textContent = `⚠️ ${consecutive} consecutive low-mood days`;
+                    streakLabel.className = 'text-xs text-orange-400';
+                } else {
+                    streakLabel.textContent = '';
+                }
+            }
+        }
+
+        /* ============================================================
+           SELF-ASSESSMENT TAB
+        ============================================================ */
+        function renderQuestionnaire() {
+            const form = document.getElementById('assessment-form');
+            if(!form) return;
+            form.innerHTML = '';
+            answeredCount = 0;
+
+            window.QUESTIONS.forEach((q, idx) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'border border-gray-700 rounded-xl p-4 bg-gray-900/50';
+                qDiv.innerHTML = `
+                    <p class="text-sm font-medium text-gray-200 mb-3">
+                        <span class="text-[#5f9f87] font-bold mr-2">${idx + 1}.</span>${q.text}
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        ${SCORE_OPTIONS.map(opt => `
+                            <div class="q-option">
+                                <input type="radio" name="${q.id}" id="${q.id}-${opt.value}" value="${opt.value}"
+                                    onchange="onAnswerChange('${q.id}')">
+                                <label for="${q.id}-${opt.value}">${opt.label}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                form.appendChild(qDiv);
+            });
+        }
+
+        window.onAnswerChange = function(qId) {
+            const answered = new Set();
+            window.QUESTIONS.forEach(q => {
+                const checked = document.querySelector(`input[name="${q.id}"]:checked`);
+                if (checked) answered.add(q.id);
+            });
+            answeredCount = answered.size;
+            const pct = (answeredCount / window.QUESTIONS.length) * 100;
+            document.getElementById('assessment-progress-bar').style.width = pct + '%';
+            document.getElementById('progress-label').textContent = `${answeredCount} / ${window.QUESTIONS.length} answered`;
+        };
+
+        window.submitAssessment = function() {
+            if (answeredCount < window.QUESTIONS.length) {
+                const errEl = document.getElementById('assessment-error');
+                errEl.textContent = 'Please answer all 10 questions before submitting.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            alert("Assessment submitted! Scoring and results logic will be added in the next commit.");
+        };
     </script>
 </body>
 </html>
