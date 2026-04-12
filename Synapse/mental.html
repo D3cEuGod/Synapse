@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .hidden { display: none !important; }
+
         /* Mood button states */
         .mood-btn { transition: all 0.2s ease; }
         .mood-btn.selected {
@@ -15,6 +16,7 @@
             box-shadow: 0 0 0 3px #5f9f87, 0 4px 20px rgba(95,159,135,0.35);
         }
         .mood-btn:hover:not(.selected) { transform: scale(1.06); }
+
         /* Question radio styling */
         .q-option input[type="radio"] { display: none; }
         .q-option label {
@@ -27,25 +29,35 @@
             background: #134e3a; border-color: #5f9f87; color: #a7f3d0; font-weight: 600;
         }
         .q-option label:hover { border-color: #5f9f87; color: #d1fae5; background: #1a2e26; }
+
         /* Progress bar animation */
         .progress-fill { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
         /* Tab active */
-        .tab-btn.active { background: #177a64; color: white; box-shadow: 0 2px 8px rgba(23,122,100,0.4); }
+        .tab-btn.active {
+            background: #177a64;
+            color: white;
+            box-shadow: 0 2px 8px rgba(23,122,100,0.4);
+        }
         .tab-btn { transition: all 0.2s ease; }
+
         /* Risk badge pulse */
         @keyframes risk-pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
             50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
         }
         .risk-high { animation: risk-pulse 2s infinite; }
+
         /* Mood history bar */
         .mood-bar { transition: height 0.5s ease; }
+
         /* Slide-in for panels */
         @keyframes slide-in {
             from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
         .panel-appear { animation: slide-in 0.3s ease forwards; }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
@@ -297,10 +309,37 @@
                         Take Assessment Again
                     </button>
                 </div>
-            </div> <div id="tab-insights" class="hidden panel-appear">
-                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 text-center">
-                    <p class="text-gray-500">Insights dashboard will be implemented in a future commit.</p>
+            </div> 
+
+            <div id="tab-insights" class="hidden panel-appear">
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4">
+                        <p class="text-xs text-gray-500 mb-1">Avg Mood (30 days)</p>
+                        <p id="stat-avg-mood" class="text-3xl font-bold text-white">—</p>
+                        <p class="text-xs text-gray-500 mt-1">out of 5</p>
+                    </div>
+                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4">
+                        <p class="text-xs text-gray-500 mb-1">Check-ins this month</p>
+                        <p id="stat-checkins" class="text-3xl font-bold text-white">—</p>
+                        <p class="text-xs text-gray-500 mt-1">days logged</p>
+                    </div>
+                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 col-span-2 sm:col-span-1">
+                        <p class="text-xs text-gray-500 mb-1">Assessments taken</p>
+                        <p id="stat-assessments" class="text-3xl font-bold text-white">—</p>
+                        <p class="text-xs text-gray-500 mt-1">total</p>
+                    </div>
                 </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 mb-6">
+                    <h3 class="font-bold text-white mb-4">Assessment History</h3>
+                    <div id="assessment-history-list" class="space-y-3">
+                        <p class="text-gray-500 text-sm text-center py-4">No assessments yet.</p>
+                    </div>
+                </div>
+
+                <div id="recommendations-container-placeholder"></div>
+
             </div>
 
         </main>
@@ -327,6 +366,53 @@
         const db = getFirestore(app);
 
         lucide.createIcons();
+
+        /* ============================================================
+           QUESTIONNAIRE DATA
+        ============================================================ */
+        window.QUESTIONS = [
+            { id: "q1", text: "How often have you felt overwhelmed by your workload?", category: "stress" },
+            { id: "q2", text: "How often have you had difficulty concentrating on your tasks?", category: "focus" },
+            { id: "q3", text: "How often have you felt anxious or worried about work?", category: "anxiety" },
+            { id: "q4", text: "How often have you felt emotionally exhausted or burned out?", category: "burnout" },
+            { id: "q5", text: "How often have you had difficulty sleeping because of work-related stress?", category: "sleep" },
+            { id: "q6", text: "How often have you felt a lack of motivation or interest in your work?", category: "motivation" },
+            { id: "q7", text: "How often have you felt isolated or disconnected from your colleagues?", category: "connection" },
+            { id: "q8", text: "How often have you experienced physical symptoms of stress (e.g. headaches, muscle tension, fatigue)?", category: "physical" },
+            { id: "q9", text: "How often have you felt unable to take proper breaks during the working day?", category: "balance" },
+            { id: "q10", text: "How often have you felt that work is negatively affecting your personal life or relationships?", category: "balance" }
+        ];
+
+        const SCORE_OPTIONS = [
+            { value: 0, label: "Not at all" },
+            { value: 1, label: "Several days" },
+            { value: 2, label: "More than half the days" },
+            { value: 3, label: "Nearly every day" }
+        ];
+
+        window.MODULE_CATALOGUE = [
+            { id: "GEN001", title: "General Wellbeing Resources", category: "general", description: "A collection of general tips and guides for maintaining a healthy mind.", icon: "book" },
+            { id: "GEN002", title: "Introduction to Workplace Support", category: "general", description: "Learn about the basics of seeking support and balancing your workload.", icon: "info" }
+        ];
+
+        function getRiskLevel(score) {
+            if (score <= 7)  return { level: "low",      label: "Low",      color: "emerald" };
+            if (score <= 14) return { level: "moderate", label: "Moderate", color: "yellow" };
+            if (score <= 21) return { level: "high",     label: "High",     color: "orange" };
+            return              { level: "very-high",   label: "Very High", color: "red" };
+        }
+
+        /* ============================================================
+           STATE
+        ============================================================ */
+        let currentUser = null;
+        let selectedMood = null;
+        let todayMoodData = null;
+        let answeredCount = 0;
+
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
 
         /* ============================================================
            AUTH & INITIALISATION
@@ -384,6 +470,13 @@
                 activeBtn.classList.remove('text-gray-400');
             }
             lucide.createIcons();
+
+            // Load insights data when tab is clicked
+            if (tab === 'insights') {
+                if (typeof window.loadInsights === 'function') {
+                    window.loadInsights();
+                }
+            }
         };
 
         /* ============================================================
@@ -581,43 +674,6 @@
             });
         }
 
-        /* ============================================================
-           QUESTIONNAIRE DATA
-        ============================================================ */
-        window.QUESTIONS = [
-            { id: "q1", text: "How often have you felt overwhelmed by your workload?", category: "stress" },
-            { id: "q2", text: "How often have you had difficulty concentrating on your tasks?", category: "focus" },
-            { id: "q3", text: "How often have you felt anxious or worried about work?", category: "anxiety" },
-            { id: "q4", text: "How often have you felt emotionally exhausted or burned out?", category: "burnout" },
-            { id: "q5", text: "How often have you had difficulty sleeping because of work-related stress?", category: "sleep" },
-            { id: "q6", text: "How often have you felt a lack of motivation or interest in your work?", category: "motivation" },
-            { id: "q7", text: "How often have you felt isolated or disconnected from your colleagues?", category: "connection" },
-            { id: "q8", text: "How often have you experienced physical symptoms of stress (e.g. headaches, muscle tension, fatigue)?", category: "physical" },
-            { id: "q9", text: "How often have you felt unable to take proper breaks during the working day?", category: "balance" },
-            { id: "q10", text: "How often have you felt that work is negatively affecting your personal life or relationships?", category: "balance" }
-        ];
-
-        const SCORE_OPTIONS = [
-            { value: 0, label: "Not at all" },
-            { value: 1, label: "Several days" },
-            { value: 2, label: "More than half the days" },
-            { value: 3, label: "Nearly every day" }
-        ];
-
-
-        /* ============================================================
-           STATE
-        ============================================================ */
-        let currentUser = null;
-        let selectedMood = null;
-        let todayMoodData = null;
-        let answeredCount = 0;
-
-        function getToday() {
-            return new Date().toISOString().split('T')[0];
-        }
-
-
         window.onAnswerChange = function(qId) {
             const answered = new Set();
             window.QUESTIONS.forEach(q => {
@@ -671,7 +727,6 @@
                 .slice(0, 3)
                 .map(e => e[0]);
 
-            
             const recommendedModules = window.MODULE_CATALOGUE.filter(m => topCategories.includes(m.category)).slice(0, 3);
             if (recommendedModules.length === 0) recommendedModules.push(...window.MODULE_CATALOGUE.slice(0, 2));
 
@@ -762,19 +817,6 @@
             lucide.createIcons();
         }
 
-        // GENERIC PLACEHOLDER MODULES
-        window.MODULE_CATALOGUE = [
-            { id: "GEN001", title: "General Wellbeing Resources", category: "general", description: "A collection of general tips and guides for maintaining a healthy mind.", icon: "book" },
-            { id: "GEN002", title: "Introduction to Workplace Support", category: "general", description: "Learn about the basics of seeking support and balancing your workload.", icon: "info" }
-        ];
-
-        function getRiskLevel(score) {
-            if (score <= 7)  return { level: "low",      label: "Low",      color: "emerald" };
-            if (score <= 14) return { level: "moderate", label: "Moderate", color: "yellow" };
-            if (score <= 21) return { level: "high",     label: "High",     color: "orange" };
-            return              { level: "very-high",   label: "Very High", color: "red" };
-        }
-
         window.resetAssessment = function() {
             document.getElementById('assessment-results').classList.add('hidden');
             document.getElementById('assessment-form-container').classList.remove('hidden');
@@ -786,6 +828,61 @@
             document.getElementById('submit-assessment-btn').disabled = false;
             document.getElementById('submit-assessment-btn').textContent = 'Submit Assessment';
             lucide.createIcons();
+        };
+
+        /* ============================================================
+           INSIGHTS TAB LOGIC (Part 1 - Stats and History)
+        ============================================================ */
+        window.loadInsights = async function() {
+            const today = new Date();
+            const days30 = [];
+            for (let i = 0; i < 30; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                days30.push(d.toISOString().split('T')[0]);
+            }
+
+            let moodSum = 0;
+            let moodCount = 0;
+            await Promise.all(days30.map(async dateStr => {
+                const snap = await getDoc(doc(db, 'moodEntries', `${currentUser.uid}_${dateStr}`));
+                if (snap.exists()) {
+                    moodSum += snap.data().moodLevel;
+                    moodCount++;
+                }
+            }));
+
+            document.getElementById('stat-avg-mood').textContent = moodCount > 0 ? (moodSum / moodCount).toFixed(1) : '—';
+            document.getElementById('stat-checkins').textContent = moodCount;
+
+            const assessQ = query(
+                collection(db, 'selfAssessments'),
+                where('employeeId', '==', currentUser.uid),
+                orderBy('submittedAt', 'desc'),
+                limit(10)
+            );
+            const assessSnap = await getDocs(assessQ);
+            document.getElementById('stat-assessments').textContent = assessSnap.size;
+
+            const histList = document.getElementById('assessment-history-list');
+            if (assessSnap.empty) {
+                histList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No assessments yet.</p>';
+            } else {
+                const riskBadgeClass = { low: 'bg-emerald-900/40 text-emerald-300', moderate: 'bg-yellow-900/40 text-yellow-300', high: 'bg-orange-900/40 text-orange-300', 'very-high': 'bg-red-900/40 text-red-300' };
+                histList.innerHTML = assessSnap.docs.map(d => {
+                    const data = d.data();
+                    const risk = getRiskLevel(data.totalScore);
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-gray-900 border border-gray-700 rounded-xl">
+                            <div>
+                                <p class="text-sm font-medium text-white">${data.date}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Score: ${data.totalScore} / 30</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${riskBadgeClass[data.riskLevel] || ''}">${risk.label} Risk</span>
+                        </div>
+                    `;
+                }).join('');
+            }
         };
 
     </script>
