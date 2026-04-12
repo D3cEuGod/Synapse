@@ -18,17 +18,70 @@
     </div>
 
     <div id="view-app" class="hidden flex-col flex-grow w-full">
-        <header id="app-header"></header>
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4 text-[#5f9f87]">
+                <a href="login.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
+                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                </a>
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="activity" class="stroke-[2.5] w-6 h-6"></i>
+                    <h1 class="text-xl font-bold tracking-tight hidden sm:block text-gray-100">Synapse Wellbeing</h1>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-sm text-gray-400 hidden md:block">
+                    Logged in as <span class="font-medium text-gray-100" id="nav-email"></span>
+                </div>
+                <button id="logout-btn" class="flex items-center space-x-1 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </header>
 
         <main id="app-main-content" class="max-w-5xl mx-auto p-6 w-full flex-grow">
         </main>
     </div>
 
     <script type="module">
-        import { db } from "./src/firebase-config.js";
-        import { initAppShell } from "./src/app-shell.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
+            authDomain: "synapse21.firebaseapp.com",
+            projectId: "synapse21",
+            storageBucket: "synapse21.firebasestorage.app",
+            messagingSenderId: "1026510421512",
+            appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
         window.db = db;
-        initAppShell();
+
+        lucide.createIcons();
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('nav-email').innerText = user.email;
+                document.getElementById('view-loading').classList.add('hidden');
+                const appView = document.getElementById('view-app');
+                appView.classList.remove('hidden');
+                appView.classList.add('flex');
+                window.currentUser = user; 
+            } else {
+                window.location.href = 'login.html'; 
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                window.location.href = 'login.html';
+            });
+        });
     </script>
 </body>
 </html>
