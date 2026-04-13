@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse Wellbeing - My Redemptions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script type="module" src="src/rewards/myRedemptions-service.js"></script>
+    <style>
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
+
+    <div id="view-loading" class="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
+        <i data-lucide="activity" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mb-4"></i>
+        <h2 class="text-xl font-bold text-gray-200">Loading Synapse...</h2>
+    </div>
+
+    <div id="view-app" class="hidden flex-col flex-grow w-full">
+        <header id="app-header"></header>
+
+        <main id="app-main-content" class="max-w-6xl mx-auto p-6 w-full flex-grow">
+            <div class="space-y-8">
+                <div class="flex items-center gap-4">
+                    <a href="rewards.html" class="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </a>
+                    <h1 class="text-3xl font-bold text-gray-100 tracking-tight">My Redemptions</h1>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-2 text-[#5f9f87] border-b border-gray-800 pb-2">
+                            <i data-lucide="ticket"></i>
+                            <h2 class="text-xl font-semibold">Active Vouchers</h2>
+                        </div>
+                        
+                        <div id="vouchers-list" class="space-y-3"></div>
+                    </section>
+
+                    <section class="space-y-4">
+                        <div class="flex items-center gap-2 text-[#5f9f87] border-b border-gray-800 pb-2">
+                            <i data-lucide="calendar-check"></i>
+                            <h2 class="text-xl font-semibold">My Entitlements</h2>
+                        </div>
+                        
+                        <div id="entitlements-list" class="space-y-3"></div>
+                    </section>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { db } from "./src/firebase-config.js";
+        import { initAppShell } from "./src/app-shell.js";
+        window.db = db;
+        initAppShell();
+    </script>
+</body>
+</html>
