@@ -40,7 +40,7 @@
             </div>
         </header>
 
-        <main class="max-w-6xl mx-auto p-6 w-full flex-grow">
+        <main class="max-w-7xl mx-auto p-6 w-full flex-grow">
             <section class="mb-6">
                 <div class="flex items-start gap-3">
                     <div class="p-3 rounded-xl bg-[#177a64]/20 border border-[#177a64]/30">
@@ -57,7 +57,7 @@
 
             <div id="message-box" class="hidden mb-6 rounded-lg border px-4 py-3 text-sm"></div>
 
-            <section class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
                     <p class="text-sm text-gray-400">Available slots</p>
                     <p id="available-count" class="text-2xl font-bold text-white mt-1">0</p>
@@ -76,123 +76,130 @@
                 </div>
             </section>
 
-            <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div class="xl:col-span-1">
-                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 sticky top-6">
-                        <div class="flex items-center gap-2 mb-4">
-                            <i data-lucide="plus-circle" class="w-5 h-5 text-[#8ee4d2]"></i>
-                            <h3 class="text-lg font-semibold text-white">Add availability slot</h3>
+            <section class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="plus-circle" class="w-5 h-5 text-[#8ee4d2]"></i>
+                        <h3 class="text-lg font-semibold text-white">Add availability slot</h3>
+                    </div>
+
+                    <form id="availability-form" class="space-y-4">
+                        <div>
+                            <label for="slot-date" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
+                            <input
+                                id="slot-date"
+                                type="date"
+                                class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                required
+                            />
                         </div>
 
-                        <form id="availability-form" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label for="slot-date" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
+                                <label for="start-time" class="block text-sm font-medium text-gray-300 mb-1">Start time</label>
                                 <input
-                                    id="slot-date"
-                                    type="date"
+                                    id="start-time"
+                                    type="time"
                                     class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
                                     required
                                 />
                             </div>
 
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label for="start-time" class="block text-sm font-medium text-gray-300 mb-1">Start time</label>
-                                    <input
-                                        id="start-time"
-                                        type="time"
-                                        class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label for="end-time" class="block text-sm font-medium text-gray-300 mb-1">End time</label>
-                                    <input
-                                        id="end-time"
-                                        type="time"
-                                        class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                class="w-full py-2.5 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white font-medium transition-colors"
-                            >
-                                Create Slot
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="xl:col-span-2 space-y-6">
-                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
-                        <div class="flex flex-col md:flex-row md:items-end gap-4 mb-5">
-                            <div class="flex-1">
-                                <label for="filter-date" class="block text-sm font-medium text-gray-300 mb-1">Filter by date</label>
+                            <div>
+                                <label for="end-time" class="block text-sm font-medium text-gray-300 mb-1">End time</label>
                                 <input
-                                    id="filter-date"
-                                    type="date"
+                                    id="end-time"
+                                    type="time"
                                     class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                    required
                                 />
                             </div>
-
-                            <div class="flex gap-3">
-                                <button
-                                    id="clear-filters-btn"
-                                    type="button"
-                                    class="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors"
-                                >
-                                    Clear
-                                </button>
-                                <button
-                                    id="refresh-btn"
-                                    type="button"
-                                    class="px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white transition-colors"
-                                >
-                                    Refresh
-                                </button>
-                            </div>
                         </div>
 
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-semibold text-white">My availability slots</h3>
-                                <p class="text-sm text-gray-400">Manage the time slots employees will be able to request.</p>
-                            </div>
-                            <span id="results-count" class="text-sm text-gray-400">0 slots</span>
+                        <button
+                            type="submit"
+                            class="w-full py-2.5 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white font-medium transition-colors"
+                        >
+                            Create Slot
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                    <div class="flex flex-col md:flex-row md:items-end gap-4 mb-5">
+                        <div class="flex-1">
+                            <label for="filter-date" class="block text-sm font-medium text-gray-300 mb-1">Filter by date</label>
+                            <input
+                                id="filter-date"
+                                type="date"
+                                class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                            />
                         </div>
 
-                        <div id="slots-loading" class="hidden text-sm text-gray-400 mb-4">
-                            Loading your availability...
-                        </div>
-
-                        <div id="slots-list" class="space-y-3"></div>
-                    </div>
-
-                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-semibold text-white">Incoming support requests</h3>
-                                <p class="text-sm text-gray-400">Accept or decline requests assigned to you.</p>
-                            </div>
+                        <div class="flex gap-3">
                             <button
-                                id="refresh-requests-btn"
+                                id="clear-filters-btn"
                                 type="button"
-                                class="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors text-sm"
+                                class="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors"
                             >
-                                Refresh Requests
+                                Clear
+                            </button>
+                            <button
+                                id="refresh-btn"
+                                type="button"
+                                class="px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white transition-colors"
+                            >
+                                Refresh
                             </button>
                         </div>
-
-                        <div id="requests-loading" class="hidden text-sm text-gray-400 mb-4">
-                            Loading incoming requests...
-                        </div>
-
-                        <div id="requests-list" class="space-y-3"></div>
                     </div>
+
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">My availability slots</h3>
+                            <p class="text-sm text-gray-400">Manage the time slots employees will be able to request.</p>
+                        </div>
+                        <span id="results-count" class="text-sm text-gray-400">0 slots</span>
+                    </div>
+
+                    <div id="slots-loading" class="hidden text-sm text-gray-400 mb-4">
+                        Loading your availability...
+                    </div>
+
+                    <div id="slots-list" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">Incoming support requests</h3>
+                            <p class="text-sm text-gray-400">Accept or decline requests assigned to you.</p>
+                        </div>
+                        <button
+                            id="refresh-requests-btn"
+                            type="button"
+                            class="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors text-sm"
+                        >
+                            Refresh Requests
+                        </button>
+                    </div>
+
+                    <div id="requests-loading" class="hidden text-sm text-gray-400 mb-4">
+                        Loading incoming requests...
+                    </div>
+
+                    <div id="requests-list" class="space-y-3"></div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">Booked sessions & notes</h3>
+                            <p class="text-sm text-gray-400">Expand a session to write or update notes.</p>
+                        </div>
+                    </div>
+
+                    <div id="session-notes-list" class="space-y-3"></div>
                 </div>
             </section>
         </main>
@@ -236,12 +243,14 @@
         let currentUserProfile = null;
         let mySlots = [];
         let myRequests = [];
+        let expandedSessionId = null;
 
         const messageBox = document.getElementById("message-box");
         const slotsList = document.getElementById("slots-list");
         const slotsLoading = document.getElementById("slots-loading");
         const requestsLoading = document.getElementById("requests-loading");
         const requestsList = document.getElementById("requests-list");
+        const sessionNotesList = document.getElementById("session-notes-list");
         const filterDateInput = document.getElementById("filter-date");
 
         function showMessage(message, type = "success") {
@@ -338,6 +347,9 @@
             }
             if (status === "BOOKED") {
                 return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/30 text-blue-300 border border-blue-800/50">BOOKED</span>`;
+            }
+            if (status === "ACCEPTED") {
+                return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-900/30 text-blue-300 border border-blue-800/50">ACCEPTED</span>`;
             }
             if (status === "DECLINED") {
                 return `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-red-900/30 text-red-300 border border-red-800/50">DECLINED</span>`;
@@ -464,6 +476,68 @@
             `).join("");
         }
 
+        function renderSessionNotes() {
+            const acceptedSessions = myRequests.filter(request => request.status === "ACCEPTED");
+
+            if (acceptedSessions.length === 0) {
+                sessionNotesList.innerHTML = `
+                    <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
+                        No booked sessions available for notes yet.
+                    </div>
+                `;
+                return;
+            }
+
+            sessionNotesList.innerHTML = acceptedSessions.map(session => {
+                const isExpanded = expandedSessionId === session.id;
+
+                return `
+                    <div class="bg-gray-900 border border-gray-700 rounded-xl overflow-hidden">
+                        <div class="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <p class="font-semibold text-white">${session.employeeName}</p>
+                                    ${getStatusBadge(session.status)}
+                                </div>
+                                <p class="text-sm text-gray-400">${session.employeeEmail}</p>
+                                <p class="text-sm text-gray-400 mt-1">${formatDateDisplay(session.date)} • ${session.startTime} - ${session.endTime}</p>
+                            </div>
+
+                            <button
+                                class="toggle-notes-btn px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-800 text-sm transition-colors"
+                                data-request-id="${session.id}"
+                            >
+                                ${isExpanded ? "Hide Notes" : "View Notes"}
+                            </button>
+                        </div>
+
+                        <div id="notes-panel-${session.id}" class="${isExpanded ? "" : "hidden"} border-t border-gray-700 px-4 pb-4 pt-4">
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-1">Session notes</label>
+                                    <textarea
+                                        id="session-notes-${session.id}"
+                                        rows="4"
+                                        placeholder="Write session notes here..."
+                                        class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                    >${session.sessionNotes || ""}</textarea>
+                                </div>
+
+                                <div class="flex justify-end">
+                                    <button
+                                        class="save-notes-btn px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white text-sm transition-colors"
+                                        data-request-id="${session.id}"
+                                    >
+                                        Save Notes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
         async function getCurrentUserProfile(uid) {
             const userRef = doc(db, "users", uid);
             const userSnap = await getDoc(userRef);
@@ -553,6 +627,7 @@
         async function loadMyRequests() {
             requestsLoading.classList.remove("hidden");
             requestsList.innerHTML = "";
+            sessionNotesList.innerHTML = "";
 
             try {
                 const requestsQuery = query(
@@ -577,6 +652,7 @@
                         startTime: data.startTime || "",
                         endTime: data.endTime || "",
                         message: data.message || "",
+                        sessionNotes: data.sessionNotes || "",
                         status: data.status || "PENDING",
                         createdAt: data.createdAt || null
                     });
@@ -589,7 +665,13 @@
                 });
 
                 myRequests = requests;
+
+                if (expandedSessionId && !myRequests.some(request => request.id === expandedSessionId && request.status === "ACCEPTED")) {
+                    expandedSessionId = null;
+                }
+
                 renderRequests();
+                renderSessionNotes();
             } catch (error) {
                 console.error(error);
                 showMessage("Could not load incoming requests.", "error");
@@ -653,6 +735,11 @@
 
             if (durationMinutes < 30) {
                 showMessage("Availability slots must be at least 30 minutes long.", "error");
+                return;
+            }
+
+            if (durationMinutes > 120) {
+                showMessage("Availability slots cannot be longer than 2 hours.", "error");
                 return;
             }
 
@@ -747,6 +834,38 @@
             }
         }
 
+        async function saveSessionNotes(requestId) {
+            clearMessage();
+
+            const notesField = document.getElementById(`session-notes-${requestId}`);
+            if (!notesField) {
+                showMessage("Could not find notes field.", "error");
+                return;
+            }
+
+            const sessionNotes = notesField.value.trim();
+
+            try {
+                await updateDoc(doc(db, "supportRequests", requestId), {
+                    sessionNotes: sessionNotes,
+                    notesUpdatedAt: serverTimestamp()
+                });
+
+                showMessage("Session notes saved.");
+                await loadMyRequests();
+                expandedSessionId = requestId;
+                renderSessionNotes();
+            } catch (error) {
+                console.error(error);
+                showMessage("Could not save session notes.", "error");
+            }
+        }
+
+        function toggleSessionNotes(requestId) {
+            expandedSessionId = expandedSessionId === requestId ? null : requestId;
+            renderSessionNotes();
+        }
+
         function bindEvents() {
             document.getElementById("logout-btn").addEventListener("click", async () => {
                 await signOut(auth);
@@ -790,6 +909,18 @@
                 const declineButton = event.target.closest(".decline-request-btn");
                 if (declineButton) {
                     await declineRequest(declineButton.dataset.requestId, declineButton.dataset.slotId);
+                    return;
+                }
+
+                const saveNotesButton = event.target.closest(".save-notes-btn");
+                if (saveNotesButton) {
+                    await saveSessionNotes(saveNotesButton.dataset.requestId);
+                    return;
+                }
+
+                const toggleNotesButton = event.target.closest(".toggle-notes-btn");
+                if (toggleNotesButton) {
+                    toggleSessionNotes(toggleNotesButton.dataset.requestId);
                 }
             });
         }
