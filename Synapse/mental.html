@@ -8,7 +8,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .hidden { display: none !important; }
-
         /* Mood button states */
         .mood-btn { transition: all 0.2s ease; }
         .mood-btn.selected {
@@ -16,7 +15,6 @@
             box-shadow: 0 0 0 3px #5f9f87, 0 4px 20px rgba(95,159,135,0.35);
         }
         .mood-btn:hover:not(.selected) { transform: scale(1.06); }
-
         /* Question radio styling */
         .q-option input[type="radio"] { display: none; }
         .q-option label {
@@ -29,35 +27,25 @@
             background: #134e3a; border-color: #5f9f87; color: #a7f3d0; font-weight: 600;
         }
         .q-option label:hover { border-color: #5f9f87; color: #d1fae5; background: #1a2e26; }
-
         /* Progress bar animation */
         .progress-fill { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-
         /* Tab active */
-        .tab-btn.active {
-            background: #177a64;
-            color: white;
-            box-shadow: 0 2px 8px rgba(23,122,100,0.4);
-        }
+        .tab-btn.active { background: #177a64; color: white; box-shadow: 0 2px 8px rgba(23,122,100,0.4); }
         .tab-btn { transition: all 0.2s ease; }
-
         /* Risk badge pulse */
         @keyframes risk-pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
             50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
         }
         .risk-high { animation: risk-pulse 2s infinite; }
-
         /* Mood history bar */
         .mood-bar { transition: height 0.5s ease; }
-
         /* Slide-in for panels */
         @keyframes slide-in {
             from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
         .panel-appear { animation: slide-in 0.3s ease forwards; }
-
         /* Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #1f2937; }
@@ -309,9 +297,7 @@
                         Take Assessment Again
                     </button>
                 </div>
-            </div> 
-
-            <div id="tab-insights" class="hidden panel-appear">
+            </div> <div id="tab-insights" class="hidden panel-appear">
                 
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                     <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4">
@@ -336,9 +322,17 @@
                     <div id="assessment-history-list" class="space-y-3">
                         <p class="text-gray-500 text-sm text-center py-4">No assessments yet.</p>
                     </div>
+                    <button id="view-more-assessments-btn" class="hidden mt-4 w-full py-2.5 text-sm text-gray-400 hover:text-white transition-colors border border-gray-700 rounded-xl hover:bg-gray-700/50 font-medium">
+                        View More
+                    </button>
                 </div>
 
-                <div id="recommendations-container-placeholder"></div>
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                    <h3 class="font-bold text-white mb-4">Your Recommended Resources</h3>
+                    <div id="recommendations-history-list" class="space-y-3">
+                        <p class="text-gray-500 text-sm text-center py-4">Complete a self-assessment to receive recommendations.</p>
+                    </div>
+                </div>
 
             </div>
 
@@ -471,7 +465,6 @@
             }
             lucide.createIcons();
 
-            // Load insights data when tab is clicked
             if (tab === 'insights') {
                 if (typeof window.loadInsights === 'function') {
                     window.loadInsights();
@@ -831,7 +824,7 @@
         };
 
         /* ============================================================
-           INSIGHTS TAB LOGIC (Part 1 - Stats and History)
+           INSIGHTS TAB LOGIC
         ============================================================ */
         window.loadInsights = async function() {
             const today = new Date();
@@ -855,25 +848,33 @@
             document.getElementById('stat-avg-mood').textContent = moodCount > 0 ? (moodSum / moodCount).toFixed(1) : '—';
             document.getElementById('stat-checkins').textContent = moodCount;
 
+            // --- 1. ASSESSMENTS HISTORY (With Pagination) ---
             const assessQ = query(
                 collection(db, 'selfAssessments'),
-                where('employeeId', '==', currentUser.uid),
-                orderBy('submittedAt', 'desc'),
-                limit(10)
+                where('employeeId', '==', currentUser.uid)
             );
             const assessSnap = await getDocs(assessQ);
-            document.getElementById('stat-assessments').textContent = assessSnap.size;
+            
+            let assessments = [];
+            assessSnap.forEach(d => assessments.push(d.data()));
+            assessments.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+            
+            document.getElementById('stat-assessments').textContent = assessments.length;
 
             const histList = document.getElementById('assessment-history-list');
-            if (assessSnap.empty) {
+            const viewMoreBtn = document.getElementById('view-more-assessments-btn');
+
+            if (assessments.length === 0) {
                 histList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No assessments yet.</p>';
+                viewMoreBtn.classList.add('hidden');
             } else {
                 const riskBadgeClass = { low: 'bg-emerald-900/40 text-emerald-300', moderate: 'bg-yellow-900/40 text-yellow-300', high: 'bg-orange-900/40 text-orange-300', 'very-high': 'bg-red-900/40 text-red-300' };
-                histList.innerHTML = assessSnap.docs.map(d => {
-                    const data = d.data();
+                
+                histList.innerHTML = assessments.map((data, index) => {
                     const risk = getRiskLevel(data.totalScore);
+                    const hiddenClass = index >= 4 ? 'hidden hidden-assessment' : ''; // Hide items after the 4th
                     return `
-                        <div class="flex items-center justify-between p-3 bg-gray-900 border border-gray-700 rounded-xl">
+                        <div class="flex items-center justify-between p-3 bg-gray-900 border border-gray-700 rounded-xl ${hiddenClass}">
                             <div>
                                 <p class="text-sm font-medium text-white">${data.date}</p>
                                 <p class="text-xs text-gray-500 mt-0.5">Score: ${data.totalScore} / 30</p>
@@ -882,6 +883,71 @@
                         </div>
                     `;
                 }).join('');
+
+                if (assessments.length > 4) {
+                    viewMoreBtn.classList.remove('hidden');
+                    viewMoreBtn.textContent = 'View More';
+                    viewMoreBtn.onclick = () => {
+                        const hiddenItems = document.querySelectorAll('.hidden-assessment');
+                        const isExpanding = hiddenItems[0].classList.contains('hidden');
+
+                        hiddenItems.forEach(item => {
+                            if (isExpanding) {
+                                item.classList.remove('hidden');
+                            } else {
+                                item.classList.add('hidden');
+                            }
+                        });
+                        viewMoreBtn.textContent = isExpanding ? 'View Less' : 'View More';
+                    };
+                } else {
+                    viewMoreBtn.classList.add('hidden');
+                }
+            }
+
+            // --- 2. RECOMMENDATIONS HISTORY ---
+            const recoQ = query(
+                collection(db, 'recommendations'),
+                where('employeeId', '==', currentUser.uid)
+            );
+            const recoSnap = await getDocs(recoQ);
+            
+            let allRecommendations = [];
+            recoSnap.forEach(d => allRecommendations.push(d.data()));
+            // Sort by newest first
+            allRecommendations.sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt));
+
+            // Deduplicate: Because it is sorted by newest first, the Set will only keep the most recent instance of each module
+            const seenModules = new Set();
+            const uniqueRecommendations = [];
+
+            for (const req of allRecommendations) {
+                if (!seenModules.has(req.moduleId)) {
+                    seenModules.add(req.moduleId);
+                    uniqueRecommendations.push(req);
+                }
+            }
+
+            const recoList = document.getElementById('recommendations-history-list');
+            if (uniqueRecommendations.length === 0) {
+                recoList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Complete a self-assessment to receive recommendations.</p>';
+            } else {
+                recoList.innerHTML = uniqueRecommendations.slice(0, 5).map(data => {
+                    const mod = window.MODULE_CATALOGUE.find(m => m.id === data.moduleId);
+                    return `
+                        <div class="flex items-center space-x-3 p-3 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#5f9f87] transition-colors cursor-pointer" onclick="window.location.href='resources.html'">
+                            <div class="p-2 bg-[#177a64]/20 rounded-lg flex-shrink-0">
+                                <i data-lucide="${mod ? mod.icon : 'book'}" class="w-4 h-4 text-[#5f9f87]"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-white truncate">${data.moduleTitle}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Recommended on ${data.dateGenerated}</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i>
+                        </div>
+                    `;
+                }).join('');
+                lucide.createIcons();
             }
         };
 
