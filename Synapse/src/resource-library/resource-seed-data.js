@@ -1,0 +1,122 @@
+export const resourceSeedData = [
+  {
+    title: "Stress - Every Mind Matters",
+    type: "Article",
+    category: "Stress",
+    description: "Practical advice on symptoms of stress, common causes, and ways to manage it.",
+    url: "https://www.nhs.uk/every-mind-matters/mental-health-issues/stress/",
+    targetRiskLevel: "Medium",
+    source: "NHS",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "Work-related stress",
+    type: "Article",
+    category: "Workplace Support",
+    description: "Guidance on recognising pressure at work and preventing it from becoming harmful stress.",
+    url: "https://www.nhs.uk/every-mind-matters/lifes-challenges/work-related-stress/",
+    targetRiskLevel: "Medium",
+    source: "NHS",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "Mental wellbeing tips",
+    type: "Module",
+    category: "Mental Health",
+    description: "A practical mental wellbeing hub with structured self-help tips for stress, anxiety, and sleep.",
+    url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/",
+    targetRiskLevel: "Low",
+    source: "NHS",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "Top tips to improve mental wellbeing",
+    type: "Article",
+    category: "Mental Health",
+    description: "Simple habits and reflection techniques to improve day-to-day mental wellbeing.",
+    url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/top-tips-to-improve-your-mental-wellbeing/",
+    targetRiskLevel: "Low",
+    source: "NHS",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "Fall asleep faster and sleep better",
+    type: "Module",
+    category: "Sleep",
+    description: "Sleep hygiene guidance including routines, relaxation, mindfulness, and environmental adjustments.",
+    url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/how-to-fall-asleep-faster-and-sleep-better/",
+    targetRiskLevel: "Medium",
+    source: "NHS",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "How can meditation help with sleep?",
+    type: "Video",
+    category: "Mindfulness",
+    description: "Meditation-based sleep support including guided meditation, breathing, and muscle relaxation.",
+    url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/how-to-fall-asleep-faster-and-sleep-better/how-can-meditation-help-with-sleep/",
+    targetRiskLevel: "Medium",
+    source: "NHS",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "How to cope with stress at work",
+    type: "Article",
+    category: "Workplace Support",
+    description: "Advice on workload, work-life balance, support gaps, and stress management at work.",
+    url: "https://www.mind.org.uk/information-support/tips-for-everyday-living/how-to-be-mentally-healthy-at-work/work-and-stress/",
+    targetRiskLevel: "Medium",
+    source: "Mind",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "Managing stress and building resilience",
+    type: "Module",
+    category: "Stress",
+    description: "Stress-management and resilience-building techniques for coping under pressure.",
+    url: "https://www.mind.org.uk/information-support/types-of-mental-health-problems/stress/managing-stress-and-building-resilience/",
+    targetRiskLevel: "High",
+    source: "Mind",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "5 Ways to Wellbeing",
+    type: "Article",
+    category: "Mental Health",
+    description: "A workplace-friendly framework for maintaining wellbeing through daily habits and connection.",
+    url: "https://www.mind.org.uk/workplace/my-mental-health-at-work/five-ways-to-wellbeing/",
+    targetRiskLevel: "Low",
+    source: "Mind",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  },
+  {
+    title: "Physical activity",
+    type: "Article",
+    category: "Fitness",
+    description: "WHO guidance on the physical and mental health benefits of regular physical activity.",
+    url: "https://www.who.int/news-room/fact-sheets/detail/physical-activity",
+    targetRiskLevel: "Low",
+    source: "WHO",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    createdBy: "admin"
+  }
+];

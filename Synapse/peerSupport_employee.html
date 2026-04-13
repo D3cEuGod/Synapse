@@ -197,6 +197,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { notifyBookingRequestMade } from "./src/notification/booking-notifications.js";
         import {
             getAuth,
             onAuthStateChanged,
@@ -580,6 +581,16 @@
 
                 await updateDoc(doc(db, "availabilitySlots", selectedSlot.id), {
                     status: "PENDING"
+                });
+
+                await notifyBookingRequestMade({
+                  employeeId: currentUser.uid,
+                  employeeName: getDisplayName(currentUserProfile, currentUser.email),
+                  ambassadorId: selectedSlot.ambassadorId,
+                  ambassadorName: selectedSlot.ambassadorName,
+                  date: selectedSlot.date,
+                  startTime: selectedSlot.startTime,
+                  endTime: selectedSlot.endTime
                 });
 
                 document.getElementById("request-form").reset();
