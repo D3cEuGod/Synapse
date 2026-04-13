@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synapse Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen">
+
+  <!-- Loading View -->
+  <div id="view-loading" class="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
+    <i data-lucide="bar-chart-2" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mb-4"></i>
+    <h2 class="text-xl font-bold text-gray-200">Loading Analytics...</h2>
+  </div>
+
+  <!-- Unauthorized View -->
+  <div id="view-unauthorized" class="hidden min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
+    <div class="bg-gray-800 py-8 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700 max-w-md w-full text-center">
+      <i data-lucide="shield-alert" class="w-10 h-10 text-red-400 mx-auto mb-4"></i>
+      <h1 class="text-2xl font-bold text-white mb-2">Access Denied</h1>
+      <p class="text-sm text-gray-400 mb-6">
+        You do not have permission to view the HR Analytics Dashboard.
+      </p>
+      <a href="login.html" class="inline-flex items-center px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium transition-colors">
+        Return to Hub
+      </a>
+    </div>
+  </div>
+
+  <!-- Dashboard View -->
+  <div id="view-dashboard" class="hidden min-h-screen py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-6xl">
+
+      <!-- Header -->
+      <div class="flex justify-between items-end mb-6 px-4 sm:px-0">
+        <div>
+          <div class="flex items-center space-x-2 text-[#5f9f87] mb-2">
+            <i data-lucide="bar-chart-2" class="stroke-[2.5] w-7 h-7"></i>
+            <h1 class="text-2xl font-bold text-white tracking-tight">HR Analytics Dashboard</h1>
+          </div>
+          <p class="text-sm text-gray-400">
+            Welcome, <span id="display-email"></span>
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a href="login.html" class="text-sm font-medium text-gray-400 hover:text-[#8ee4d2] transition-colors">
+            Back to Hub
+          </a>
+          <button id="logout-btn" class="flex items-center space-x-2 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors pb-1">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Logout</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Section -->
+      <div class="bg-gray-800 py-6 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700 mb-6">
+        <div class="flex items-center space-x-2 mb-4">
+          <i data-lucide="filter" class="w-5 h-5 text-[#5f9f87]"></i>
+          <h2 class="text-lg font-semibold text-white">Filters</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="start-date" class="block text-sm font-medium text-gray-300 mb-1">Start Date</label>
+            <input
+              type="date"
+              id="start-date"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+            />
+          </div>
+
+          <div>
+            <label for="end-date" class="block text-sm font-medium text-gray-300 mb-1">End Date</label>
+            <input
+              type="date"
+              id="end-date"
+              class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+            />
+          </div>
+
+          <div class="flex items-end">
+            <button
+              id="load-report-btn"
+              class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#177a64] hover:bg-[#0b4533] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-[#5f9f87] transition-colors"
+            >
+              Load Report
+            </button>
+          </div>
+        </div>
+
+        <div id="report-error" class="hidden mt-4 p-3 bg-red-900/30 text-red-400 text-sm rounded-lg border border-red-800/50 text-center"></div>
+      </div>
+
+      <div class="space-y-6">
+
+        <!-- Self-Assessment Section -->
+        <div>
+          <div id="self-assessment-notice" class="hidden bg-amber-900/20 border border-amber-700/50 rounded-xl p-5 flex items-start gap-4">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400 mt-0.5 shrink-0"></i>
+            <div>
+              <p class="text-sm font-semibold text-amber-300 mb-1">Insufficient data — Self-Assessments</p>
+              <p class="text-sm text-amber-400/80">Fewer than 5 self-assessment entries exist in this date range. Data is hidden to protect employee privacy. Please widen the date range or check back later.</p>
+            </div>
+          </div>
+          <div id="self-assessment-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Total Self-Assessments</h3>
+                <i data-lucide="clipboard-list" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="total-self-assessments" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Average Assessment Score</h3>
+                <i data-lucide="sigma" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="avg-self-score" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <!----
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">High Risk Count</h3>
+                <i data-lucide="triangle-alert" class="w-5 h-5 text-red-400"></i>
+              </div>
+              <p id="high-risk-count" class="text-3xl font-bold text-white">-</p>
+            </div>
+              -->
+
+          </div>
+        </div>
+
+        <!-- Mood Section -->
+        <div>
+          <div id="mood-notice" class="hidden bg-amber-900/20 border border-amber-700/50 rounded-xl p-5 flex items-start gap-4">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-amber-400 mt-0.5 shrink-0"></i>
+            <div>
+              <p class="text-sm font-semibold text-amber-300 mb-1">Insufficient data — Mood Entries</p>
+              <p class="text-sm text-amber-400/80">Fewer than 5 mood entries exist in this date range. Data is hidden to protect employee privacy. Please widen the date range or check back later.</p>
+            </div>
+          </div>
+          <div id="mood-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Total Mood Entries</h3>
+                <i data-lucide="heart" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="total-mood-entries" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Average Mood</h3>
+                <i data-lucide="smile" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="avg-mood" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Low Mood Entries (≤ 2)</h3>
+                <i data-lucide="frown" class="w-5 h-5 text-amber-400"></i>
+              </div>
+              <p id="low-mood-count" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Neutral Mood Entries</h3>
+                <i data-lucide="meh" class="w-5 h-5 text-blue-400"></i>
+              </div>
+              <p id="neutral-mood-count" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">High Mood Entries (>= 4)</h3>
+                <i data-lucide="smile" class="w-5 h-5 text-green-400"></i>
+              </div>
+              <p id="high-mood-count" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+          </div>
+
+          <!-- Chart -->
+          <div id="mood-chart-section" class="hidden bg-gray-800 py-6 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700">
+            <div class="flex items-center space-x-2 mb-4">
+              <i data-lucide="pie-chart" class="w-5 h-5 text-[#5f9f87]"></i>
+              <h2 class="text-lg font-semibold text-white">Mood distribution</h2>
+            </div>
+            <div class="w-full max-w-md mx-auto">
+              <canvas id="mood-distribution-chart" class="w-full h-64"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Section -->
+        <div id="export-section" class="hidden bg-gray-800 py-6 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-semibold text-white mb-1">Export Report</h2>
+              <p class="text-sm text-gray-400">
+                Export the current anonymised dashboard data safely.
+              </p>
+            </div>
+            <div class="flex gap-3">
+              <button
+                id="export-csv-btn"
+                class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 hover:border-[#177a64] hover:bg-gray-800 text-sm font-medium text-white transition-colors"
+              >
+                <i data-lucide="download" class="w-4 h-4 mr-2"></i>
+                Export CSV
+              </button>
+              <button
+                id="export-pdf-btn"
+                class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-900 border border-gray-700 hover:border-[#177a64] hover:bg-gray-800 text-sm font-medium text-white transition-colors"
+              >
+                <i data-lucide="file-text" class="w-4 h-4 mr-2"></i>
+                Export PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      
+    import {
+      userCanAccessHRDashboard,
+      getHRDashboard
+    } from "./src/hrdashboard/hrdashboard.js";
+  
+    import {
+      exportReportAsCSV,
+      exportReportAsPDF
+    } from "./src/hrdashboard/export-service.js";
+
+    let moodChart = null;
+    let currentReport = null;
+    
+    const firebaseConfig = {
+      apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
+      authDomain: "synapse21.firebaseapp.com",
+      projectId: "synapse21",
+      storageBucket: "synapse21.firebasestorage.app",
+      messagingSenderId: "1026510421512",
+      appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd",
+      measurementId: "G-RVV578PX0S"
+    };
+  
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+  
+    lucide.createIcons();
+  
+    const viewLoading = document.getElementById("view-loading");
+    const viewDashboard = document.getElementById("view-dashboard");
+    const viewUnauthorized = document.getElementById("view-unauthorized");
+  
+    function showView(viewId) {
+      [viewLoading, viewDashboard, viewUnauthorized].forEach(v => v.classList.add("hidden"));
+      document.getElementById("view-" + viewId).classList.remove("hidden");
+    }
+  
+    function setDefaultDates() {
+      const today = new Date();
+      const prior = new Date();
+      prior.setDate(today.getDate() - 30);
+  
+      document.getElementById("end-date").value = today.toISOString().split("T")[0];
+      document.getElementById("start-date").value = prior.toISOString().split("T")[0];
+    }
+
+    function renderMoodDistributionChart(moodStats){
+      const ctx = document.getElementById('mood-distribution-chart').getContext('2d');
+      if(moodChart) {
+        moodChart.destroy();
+      }
+
+      moodChart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Low Mood", "Neutral Mood", "High Mood"],
+          datasets: [{
+            data: [
+              moodStats.lowMoodCount,
+              moodStats.neutralMoodCount,
+              moodStats.highMoodCount
+            ],
+            backgroundColor: [
+              "#f59e0b",
+              "#60a5fa",
+              "#34d399"
+            ],
+            borderColor: "#1f2937",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#e5e7eb"
+              }
+            }
+          }
+        }
+      });
+
+
+    }
+  
+    const ANONYMITY_THRESHOLD = 5;
+
+    async function loadReport() {
+      const startDate = document.getElementById("start-date").value;
+      const endDate = document.getElementById("end-date").value;
+
+      const report = await getHRDashboard(db, startDate, endDate);
+
+      // Only expose sections that meet the anonymity threshold to exports
+      currentReport = {
+        selfAssessmentStats: report.selfAssessmentStats.totalSelfAssessments >= ANONYMITY_THRESHOLD
+          ? report.selfAssessmentStats
+          : null,
+        moodStats: report.moodStats.totalMoodEntries >= ANONYMITY_THRESHOLD
+          ? report.moodStats
+          : null
+      };
+
+      const selfAssessmentNotice = document.getElementById("self-assessment-notice");
+      const selfAssessmentStats = document.getElementById("self-assessment-stats");
+      const moodNotice = document.getElementById("mood-notice");
+      const moodStats = document.getElementById("mood-stats");
+      const moodChartSection = document.getElementById("mood-chart-section");
+      const exportSection = document.getElementById("export-section");
+
+      // Self-assessment threshold check
+      if (report.selfAssessmentStats.totalSelfAssessments < ANONYMITY_THRESHOLD) {
+        selfAssessmentNotice.classList.remove("hidden");
+        selfAssessmentStats.classList.add("hidden");
+      } else {
+        selfAssessmentNotice.classList.add("hidden");
+        selfAssessmentStats.classList.remove("hidden");
+
+        document.getElementById("total-self-assessments").innerText =
+          report.selfAssessmentStats.totalSelfAssessments;
+
+        document.getElementById("avg-self-score").innerText =
+          report.selfAssessmentStats.averageScore;
+
+        /*
+        document.getElementById("high-risk-count").innerText =
+          report.selfAssessmentStats.highRiskCount;
+        */
+      }
+
+      // Mood threshold check
+      if (report.moodStats.totalMoodEntries < ANONYMITY_THRESHOLD) {
+        moodNotice.classList.remove("hidden");
+        moodStats.classList.add("hidden");
+        moodChartSection.classList.add("hidden");
+      } else {
+        moodNotice.classList.add("hidden");
+        moodStats.classList.remove("hidden");
+        moodChartSection.classList.remove("hidden");
+
+        document.getElementById("total-mood-entries").innerText =
+          report.moodStats.totalMoodEntries;
+
+        document.getElementById("avg-mood").innerText =
+          report.moodStats.averageMood;
+
+        document.getElementById("low-mood-count").innerText =
+          report.moodStats.lowMoodCount;
+
+        document.getElementById("neutral-mood-count").innerText =
+          report.moodStats.neutralMoodCount;
+
+        document.getElementById("high-mood-count").innerText =
+          report.moodStats.highMoodCount;
+
+        renderMoodDistributionChart(report.moodStats);
+      }
+
+      // Only show export when at least one section has sufficient data
+      const hasData = report.selfAssessmentStats.totalSelfAssessments >= ANONYMITY_THRESHOLD ||
+                      report.moodStats.totalMoodEntries >= ANONYMITY_THRESHOLD;
+      exportSection.classList.toggle("hidden", !hasData);
+    }
+  
+    document.getElementById("load-report-btn").addEventListener("click", loadReport);
+
+    document.getElementById("export-csv-btn").addEventListener("click", () => exportReportAsCSV(currentReport));
+    document.getElementById("export-pdf-btn").addEventListener("click", () => exportReportAsPDF(currentReport));
+  
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    });
+  
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+  
+      const allowed = await userCanAccessHRDashboard(db, user);
+  
+      if (!allowed) {
+        showView("unauthorized");
+        return;
+      }
+  
+      document.getElementById("display-email").innerText = user.email;
+      setDefaultDates();
+      showView("dashboard");
+      await loadReport();
+    });
+  </script>
+</body>
+</html>

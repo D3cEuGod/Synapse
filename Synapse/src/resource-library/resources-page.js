@@ -4,6 +4,8 @@ import {
   getAvailableCategories
 } from "./resource-service.js";
 
+let allResources = [];
+
 function createResourceCard(resource) {
   return `
     <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-md">
@@ -28,6 +30,8 @@ function createResourceCard(resource) {
 
       <a
         href="${resource.url}"
+        target="_blank"
+        rel="noopener noreferrer"
         class="inline-flex items-center px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium transition-colors"
       >
         Open Resource
@@ -38,7 +42,6 @@ function createResourceCard(resource) {
 
 function renderResourceList(resources) {
   const listContainer = document.getElementById("resource-list");
-
   if (!listContainer) return;
 
   if (!resources.length) {
@@ -53,29 +56,6 @@ function renderResourceList(resources) {
   listContainer.innerHTML = resources.map(createResourceCard).join("");
 }
 
-function populateFilters() {
-  const typeSelect = document.getElementById("resource-type-filter");
-  const categorySelect = document.getElementById("resource-category-filter");
-
-  if (typeSelect) {
-    getAvailableTypes().forEach(type => {
-      const option = document.createElement("option");
-      option.value = type;
-      option.textContent = type;
-      typeSelect.appendChild(option);
-    });
-  }
-
-  if (categorySelect) {
-    getAvailableCategories().forEach(category => {
-      const option = document.createElement("option");
-      option.value = category;
-      option.textContent = category;
-      categorySelect.appendChild(option);
-    });
-  }
-}
-
 function getFilteredResources() {
   const searchInput = document.getElementById("resource-search");
   const typeSelect = document.getElementById("resource-type-filter");
@@ -85,7 +65,7 @@ function getFilteredResources() {
   const selectedType = typeSelect ? typeSelect.value : "";
   const selectedCategory = categorySelect ? categorySelect.value : "";
 
-  return getAllResources().filter(resource => {
+  return allResources.filter(resource => {
     const matchesSearch =
       !searchTerm ||
       resource.title.toLowerCase().includes(searchTerm) ||
@@ -122,9 +102,36 @@ function setupFiltersAndSearch() {
   }
 }
 
-export function renderResourcesPage() {
-  const container = document.getElementById("app-main-content");
+async function populateFilters() {
+  const typeSelect = document.getElementById("resource-type-filter");
+  const categorySelect = document.getElementById("resource-category-filter");
 
+  const types = await getAvailableTypes();
+  const categories = await getAvailableCategories();
+
+  if (typeSelect) {
+    typeSelect.innerHTML = `<option value="">All Types</option>`;
+    types.forEach(type => {
+      const option = document.createElement("option");
+      option.value = type;
+      option.textContent = type;
+      typeSelect.appendChild(option);
+    });
+  }
+
+  if (categorySelect) {
+    categorySelect.innerHTML = `<option value="">All Categories</option>`;
+    categories.forEach(category => {
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = category;
+      categorySelect.appendChild(option);
+    });
+  }
+}
+
+export async function renderResourcesPage() {
+  const container = document.getElementById("app-main-content");
   if (!container) return;
 
   container.innerHTML = `
@@ -159,11 +166,34 @@ export function renderResourcesPage() {
         </select>
       </div>
 
+      <div id="resource-loading" class="text-sm text-gray-400">
+        Loading resources...
+      </div>
+
       <div id="resource-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
     </section>
   `;
 
-  populateFilters();
-  setupFiltersAndSearch();
-  renderResourceList(getAllResources());
+  try {
+    allResources = await getAllResources();
+    await populateFilters();
+    setupFiltersAndSearch();
+    renderResourceList(allResources);
+  } catch (error) {
+    console.error("Error loading resources:", error);
+
+    const listContainer = document.getElementById("resource-list");
+    if (listContainer) {
+      listContainer.innerHTML = `
+        <div class="bg-red-900/30 border border-red-800/50 rounded-xl p-6 text-red-300 md:col-span-2">
+          Could not load resources from the database.
+        </div>
+      `;
+    }
+  } finally {
+    const loadingEl = document.getElementById("resource-loading");
+    if (loadingEl) {
+      loadingEl.remove();
+    }
+  }
 }

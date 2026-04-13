@@ -18,6 +18,7 @@ function createNotificationItem(notification) {
             : `<button
                  class="mark-read-btn text-xs px-3 py-1 rounded-md bg-[#177a64] hover:bg-[#0b4533] text-white"
                  data-id="${notification.id}"
+                 type="button"
                >
                  Mark as read
                </button>`
@@ -27,22 +28,13 @@ function createNotificationItem(notification) {
   `;
 }
 
-function attachMarkReadEvents() {
-  const buttons = document.querySelectorAll(".mark-read-btn");
-
-  buttons.forEach(button => {
-    button.addEventListener("click", async () => {
-      const notificationId = button.dataset.id;
-      await markNotificationAsRead(notificationId);
-    });
-  });
-}
-
 export function renderNotificationsPanel(userId, containerId = "notifications-panel") {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  return subscribeToNotifications(userId, (notifications) => {
+  let hasBoundClickHandler = false;
+
+  const unsubscribe = subscribeToNotifications(userId, (notifications) => {
     const unreadCount = notifications.filter(item => !item.isRead).length;
 
     container.innerHTML = `
@@ -53,6 +45,8 @@ export function renderNotificationsPanel(userId, containerId = "notifications-pa
             Unread: ${unreadCount}
           </span>
         </div>
+
+        <div id="notification-error" class="hidden text-sm text-red-400"></div>
 
         <div class="space-y-3 max-h-96 overflow-y-auto">
           ${
@@ -66,6 +60,41 @@ export function renderNotificationsPanel(userId, containerId = "notifications-pa
       </section>
     `;
 
-    attachMarkReadEvents();
+    if (!hasBoundClickHandler) {
+      container.addEventListener("click", async (event) => {
+        const button = event.target.closest(".mark-read-btn");
+        if (!button) return;
+
+        const notificationId = button.dataset.id;
+        if (!notificationId) return;
+
+        const errorBox = document.getElementById("notification-error");
+        if (errorBox) {
+          errorBox.classList.add("hidden");
+          errorBox.textContent = "";
+        }
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "Updating...";
+
+        try {
+          await markNotificationAsRead(notificationId);
+        } catch (error) {
+          console.error("Failed to mark notification as read:", error);
+          button.disabled = false;
+          button.textContent = originalText;
+
+          if (errorBox) {
+            errorBox.textContent = "Could not mark notification as read.";
+            errorBox.classList.remove("hidden");
+          }
+        }
+      });
+
+      hasBoundClickHandler = true;
+    }
   });
+
+  return unsubscribe;
 }
