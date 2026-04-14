@@ -3,11 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synapse Wellbeing - Profile</title>
+    <title>Synapse Wellbeing - Mental Health</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .hidden { display: none !important; }
+        /* Mood button states */
+        .mood-btn { transition: all 0.2s ease; }
+        .mood-btn.selected {
+            transform: scale(1.12);
+            box-shadow: 0 0 0 3px #5f9f87, 0 4px 20px rgba(95,159,135,0.35);
+        }
+        .mood-btn:hover:not(.selected) { transform: scale(1.06); }
+        /* Question radio styling */
+        .q-option input[type="radio"] { display: none; }
+        .q-option label {
+            display: flex; align-items: center; justify-content: center;
+            padding: 0.5rem 0.75rem; border: 1px solid #374151; border-radius: 0.5rem;
+            cursor: pointer; transition: all 0.15s ease; font-size: 0.8rem;
+            color: #9ca3af; background: #111827; text-align: center;
+        }
+        .q-option input[type="radio"]:checked + label {
+            background: #134e3a; border-color: #5f9f87; color: #a7f3d0; font-weight: 600;
+        }
+        .q-option label:hover { border-color: #5f9f87; color: #d1fae5; background: #1a2e26; }
+        /* Progress bar animation */
+        .progress-fill { transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Tab active */
+        .tab-btn.active { background: #177a64; color: white; box-shadow: 0 2px 8px rgba(23,122,100,0.4); }
+        .tab-btn { transition: all 0.2s ease; }
+        /* Risk badge pulse */
+        @keyframes risk-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+        }
+        .risk-high { animation: risk-pulse 2s infinite; }
+        /* Mood history bar */
+        .mood-bar { transition: height 0.5s ease; }
+        /* Slide-in for panels */
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .panel-appear { animation: slide-in 0.3s ease forwards; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
@@ -18,14 +60,15 @@
     </div>
 
     <div id="view-app" class="hidden flex-col flex-grow w-full">
-        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+
+        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
             <div class="flex items-center space-x-4 text-[#5f9f87]">
                 <a href="login.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
                     <i data-lucide="chevron-left" class="w-6 h-6"></i>
                 </a>
                 <div class="flex items-center space-x-2">
-                    <i data-lucide="activity" class="stroke-[2.5] w-6 h-6"></i>
-                    <h1 class="text-xl font-bold tracking-tight hidden sm:block text-gray-100">Synapse Wellbeing</h1>
+                    <i data-lucide="heart" class="stroke-[2.5] w-6 h-6"></i>
+                    <h1 class="text-xl font-bold tracking-tight hidden sm:block text-gray-100">Mental Health</h1>
                 </div>
             </div>
             <div class="flex items-center space-x-4">
@@ -39,15 +82,271 @@
             </div>
         </header>
 
-        <main id="app-main-content" class="max-w-5xl mx-auto p-6 w-full flex-grow">
-        </main>
-    </div>
+        <main class="max-w-4xl mx-auto p-4 sm:p-6 w-full flex-grow">
 
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-white">Mental Wellbeing</h2>
+                <p class="text-gray-400 text-sm mt-1">Track your mood and complete wellbeing assessments.</p>
+            </div>
+
+            <div class="flex space-x-2 mb-6 bg-gray-800 p-1 rounded-xl border border-gray-700">
+                <button class="tab-btn active flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold" data-tab="mood" onclick="switchTab('mood')">
+                    <span class="flex items-center justify-center space-x-2">
+                        <i data-lucide="smile" class="w-4 h-4"></i>
+                        <span>Daily Mood</span>
+                    </span>
+                </button>
+                <button class="tab-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold text-gray-400 hover:text-white" data-tab="assessment" onclick="switchTab('assessment')">
+                    <span class="flex items-center justify-center space-x-2">
+                        <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                        <span>Self-Assessment</span>
+                    </span>
+                </button>
+                <button class="tab-btn flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold text-gray-400 hover:text-white" data-tab="insights" onclick="switchTab('insights')">
+                    <span class="flex items-center justify-center space-x-2">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"></i>
+                        <span>Insights</span>
+                    </span>
+                </button>
+            </div>
+
+            <div id="tab-mood" class="panel-appear">
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 mb-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <div>
+                            <h3 class="text-lg font-bold text-white">How are you feeling today?</h3>
+                            <p class="text-sm text-gray-400" id="today-date-label"></p>
+                        </div>
+                        <div id="mood-saved-badge" class="hidden items-center space-x-1 text-xs font-medium text-emerald-400 bg-emerald-900/30 border border-emerald-700/50 px-3 py-1.5 rounded-full">
+                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                            <span>Saved</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-5 gap-3 mb-6" id="mood-buttons">
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="1" onclick="selectMood(1)">
+                            <span class="text-3xl mb-1">😞</span>
+                            <span class="text-xs text-gray-400 font-medium">Very Low</span>
+                            <span class="text-xs text-gray-600 mt-0.5">1</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="2" onclick="selectMood(2)">
+                            <span class="text-3xl mb-1">😔</span>
+                            <span class="text-xs text-gray-400 font-medium">Low</span>
+                            <span class="text-xs text-gray-600 mt-0.5">2</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="3" onclick="selectMood(3)">
+                            <span class="text-3xl mb-1">😐</span>
+                            <span class="text-xs text-gray-400 font-medium">Neutral</span>
+                            <span class="text-xs text-gray-600 mt-0.5">3</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="4" onclick="selectMood(4)">
+                            <span class="text-3xl mb-1">🙂</span>
+                            <span class="text-xs text-gray-400 font-medium">Good</span>
+                            <span class="text-xs text-gray-600 mt-0.5">4</span>
+                        </button>
+                        <button class="mood-btn flex flex-col items-center p-3 bg-gray-900 border border-gray-700 rounded-xl" data-mood="5" onclick="selectMood(5)">
+                            <span class="text-3xl mb-1">😊</span>
+                            <span class="text-xs text-gray-400 font-medium">Great</span>
+                            <span class="text-xs text-gray-600 mt-0.5">5</span>
+                        </button>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-400 mb-1.5">Optional note <span class="text-gray-600">(how's your day been?)</span></label>
+                        <textarea id="mood-note" rows="2" placeholder="e.g. Feeling stressed about upcoming deadline..." class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-[#5f9f87] focus:border-[#5f9f87] resize-none"></textarea>
+                    </div>
+
+                    <button id="save-mood-btn" onclick="saveMood()" disabled class="w-full py-2.5 px-4 bg-[#177a64] hover:bg-[#0b4533] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors text-sm">
+                        Save Today's Mood
+                    </button>
+
+                    <div id="mood-feedback" class="hidden mt-4 p-4 rounded-xl border text-sm"></div>
+                </div>
+
+                <div id="consecutive-alert" class="hidden mb-6 p-4 bg-amber-900/30 border border-amber-700/60 rounded-2xl">
+                    <div class="flex items-start space-x-3">
+                        <div class="p-2 bg-amber-700/30 rounded-full mt-0.5">
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-semibold text-amber-300 text-sm">Wellbeing Check-In Recommended</p>
+                            <p class="text-amber-400/80 text-xs mt-1">You've reported a low mood for 14 or more consecutive days. Talking to a Wellbeing Ambassador can really help.</p>
+                            <a href="peerSupport.html" class="inline-flex items-center space-x-1 mt-3 text-xs font-semibold text-amber-300 hover:text-white bg-amber-700/30 hover:bg-amber-700/60 px-3 py-1.5 rounded-lg transition-colors">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                                <span>Book a Wellbeing Session</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                    <h3 class="text-base font-bold text-white mb-4">Last 7 Days</h3>
+                    <div id="mood-history-chart" class="flex items-end justify-between space-x-2 h-24 mb-3">
+                        </div>
+                    <div id="mood-history-labels" class="flex justify-between text-xs text-gray-500 space-x-2">
+                        </div>
+                    <div class="flex items-center justify-between mt-4 text-xs text-gray-500">
+                        <span>Scale: 1 (Very Low) → 5 (Great)</span>
+                        <span id="mood-streak-label"></span>
+                    </div>
+                </div>
+            </div> 
+
+            <div id="tab-assessment" class="hidden panel-appear">
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 mb-6">
+                    <div class="flex items-start space-x-4">
+                        <div class="p-3 bg-[#177a64]/20 rounded-xl">
+                            <i data-lucide="clipboard-list" class="w-6 h-6 text-[#5f9f87]"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Workplace Wellbeing Questionnaire</h3>
+                            <p class="text-gray-400 text-sm mt-1">This short questionnaire helps identify your current wellbeing levels and suggests personalised resources. All responses are confidential.</p>
+                            <p class="text-xs text-gray-500 mt-2">Takes approximately 3–5 minutes &bull; 10 questions</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6" id="assessment-form-container">
+                    <div id="assessment-progress-bar-wrap" class="mb-6">
+                        <div class="flex justify-between text-xs text-gray-400 mb-2">
+                            <span>Progress</span>
+                            <span id="progress-label">0 / 10 answered</span>
+                        </div>
+                        <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                            <div id="assessment-progress-bar" class="h-full bg-[#177a64] rounded-full progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <form id="assessment-form" class="space-y-6">
+                    </form>
+
+                    <div id="assessment-error" class="hidden mt-4 p-3 bg-red-900/30 text-red-400 text-sm rounded-lg border border-red-800/50 text-center"></div>
+
+                    <button id="submit-assessment-btn" onclick="submitAssessment()" class="mt-6 w-full py-2.5 px-4 bg-[#177a64] hover:bg-[#0b4533] disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-colors text-sm">
+                        Submit Assessment
+                    </button>
+                </div>
+
+                <div id="assessment-results" class="hidden panel-appear mt-6">
+                    <div id="result-card" class="bg-gray-800 border rounded-2xl p-6 mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold text-white">Your Results</h3>
+                            <span id="result-badge" class="px-3 py-1 rounded-full text-xs font-bold"></span>
+                        </div>
+
+                        <div class="flex items-center space-x-4 mb-6">
+                            <div class="flex-shrink-0">
+                                <div class="relative w-20 h-20">
+                                    <svg class="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
+                                        <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#374151" stroke-width="3"/>
+                                        <circle id="score-circle" cx="18" cy="18" r="15.9155" fill="none" stroke="#5f9f87" stroke-width="3"
+                                            stroke-dasharray="0 100" stroke-linecap="round" style="transition: stroke-dasharray 1s ease"/>
+                                    </svg>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span id="score-number" class="text-xl font-bold text-white"></span>
+                                        <span class="text-xs text-gray-500">/ 30</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <p id="result-title" class="font-semibold text-white text-base"></p>
+                                <p id="result-description" class="text-gray-400 text-sm mt-1"></p>
+                            </div>
+                        </div>
+
+                        <div id="professional-support-alert" class="hidden mb-4 p-4 bg-red-900/30 border border-red-700/60 rounded-xl risk-high">
+                            <div class="flex items-start space-x-3">
+                                <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <div>
+                                    <p class="font-semibold text-red-300 text-sm">Professional Support Recommended</p>
+                                    <p class="text-red-400/80 text-xs mt-1">Your responses suggest you may benefit from speaking with a qualified mental health professional. Please don't hesitate to reach out. You are not alone.</p>
+                                    <p class="text-red-400/60 text-xs mt-2">Samaritans: 116 123 &bull; Mind: 0300 123 3393 &bull; Speak to your GP</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="book-session-prompt" class="hidden mb-4 p-4 bg-[#177a64]/15 border border-[#5f9f87]/40 rounded-xl">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-start space-x-3">
+                                    <i data-lucide="calendar-plus" class="w-5 h-5 text-[#5f9f87] flex-shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <p class="font-semibold text-[#8ee4d2] text-sm">Talk to a Wellbeing Ambassador</p>
+                                        <p class="text-gray-400 text-xs mt-1">A confidential conversation can make a real difference.</p>
+                                    </div>
+                                </div>
+                                <a href="peerSupport.html" class="flex-shrink-0 ml-4 text-xs font-semibold bg-[#177a64] hover:bg-[#0b4533] text-white px-3 py-1.5 rounded-lg transition-colors">
+                                    Book Now
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                        <h4 class="font-bold text-white mb-1">Recommended for You</h4>
+                        <p class="text-gray-400 text-xs mb-4">Personalised learning modules based on your assessment.</p>
+                        <div id="recommended-modules" class="space-y-3">
+                            </div>
+                        <a href="resources.html" class="mt-4 flex items-center justify-center space-x-2 text-sm text-[#5f9f87] hover:text-[#8ee4d2] transition-colors">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                            <span>Browse full resource library</span>
+                        </a>
+                    </div>
+
+                    <button onclick="resetAssessment()" class="mt-4 w-full py-2.5 px-4 border border-gray-600 hover:border-[#5f9f87] text-gray-300 hover:text-white font-medium rounded-xl transition-colors text-sm">
+                        Take Assessment Again
+                    </button>
+                </div>
+            </div> <div id="tab-insights" class="hidden panel-appear">
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4">
+                        <p class="text-xs text-gray-500 mb-1">Avg Mood (30 days)</p>
+                        <p id="stat-avg-mood" class="text-3xl font-bold text-white">—</p>
+                        <p class="text-xs text-gray-500 mt-1">out of 5</p>
+                    </div>
+                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4">
+                        <p class="text-xs text-gray-500 mb-1">Check-ins this month</p>
+                        <p id="stat-checkins" class="text-3xl font-bold text-white">—</p>
+                        <p class="text-xs text-gray-500 mt-1">days logged</p>
+                    </div>
+                    <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 col-span-2 sm:col-span-1">
+                        <p class="text-xs text-gray-500 mb-1">Assessments taken</p>
+                        <p id="stat-assessments" class="text-3xl font-bold text-white">—</p>
+                        <p class="text-xs text-gray-500 mt-1">total</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6 mb-6">
+                    <h3 class="font-bold text-white mb-4">Assessment History</h3>
+                    <div id="assessment-history-list" class="space-y-3">
+                        <p class="text-gray-500 text-sm text-center py-4">No assessments yet.</p>
+                    </div>
+                    <button id="view-more-assessments-btn" class="hidden mt-4 w-full py-2.5 text-sm text-gray-400 hover:text-white transition-colors border border-gray-700 rounded-xl hover:bg-gray-700/50 font-medium">
+                        View More
+                    </button>
+                </div>
+
+                <div class="bg-gray-800 border border-gray-700 rounded-2xl p-6">
+                    <h3 class="font-bold text-white mb-4">Your Recommended Resources</h3>
+                    <div id="recommendations-history-list" class="space-y-3">
+                        <p class="text-gray-500 text-sm text-center py-4">Complete a self-assessment to receive recommendations.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div> 
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, addDoc, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        /* ============================================================
+           FIREBASE INIT
+        ============================================================ */
         const firebaseConfig = {
             apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
             authDomain: "synapse21.firebaseapp.com",
@@ -56,32 +355,602 @@
             messagingSenderId: "1026510421512",
             appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        window.db = db;
 
         lucide.createIcons();
 
-        onAuthStateChanged(auth, (user) => {
+        /* ============================================================
+           QUESTIONNAIRE DATA
+        ============================================================ */
+        window.QUESTIONS = [
+            { id: "q1", text: "How often have you felt overwhelmed by your workload?", category: "stress" },
+            { id: "q2", text: "How often have you had difficulty concentrating on your tasks?", category: "focus" },
+            { id: "q3", text: "How often have you felt anxious or worried about work?", category: "anxiety" },
+            { id: "q4", text: "How often have you felt emotionally exhausted or burned out?", category: "burnout" },
+            { id: "q5", text: "How often have you had difficulty sleeping because of work-related stress?", category: "sleep" },
+            { id: "q6", text: "How often have you felt a lack of motivation or interest in your work?", category: "motivation" },
+            { id: "q7", text: "How often have you felt isolated or disconnected from your colleagues?", category: "connection" },
+            { id: "q8", text: "How often have you experienced physical symptoms of stress (e.g. headaches, muscle tension, fatigue)?", category: "physical" },
+            { id: "q9", text: "How often have you felt unable to take proper breaks during the working day?", category: "balance" },
+            { id: "q10", text: "How often have you felt that work is negatively affecting your personal life or relationships?", category: "balance" }
+        ];
+
+        const SCORE_OPTIONS = [
+            { value: 0, label: "Not at all" },
+            { value: 1, label: "Several days" },
+            { value: 2, label: "More than half the days" },
+            { value: 3, label: "Nearly every day" }
+        ];
+
+        window.MODULE_CATALOGUE = [
+            { id: "GEN001", title: "General Wellbeing Resources", category: "general", description: "A collection of general tips and guides for maintaining a healthy mind.", icon: "book" },
+            { id: "GEN002", title: "Introduction to Workplace Support", category: "general", description: "Learn about the basics of seeking support and balancing your workload.", icon: "info" }
+        ];
+
+        function getRiskLevel(score) {
+            if (score <= 7)  return { level: "low",      label: "Low",      color: "emerald" };
+            if (score <= 14) return { level: "moderate", label: "Moderate", color: "yellow" };
+            if (score <= 21) return { level: "high",     label: "High",     color: "orange" };
+            return              { level: "very-high",   label: "Very High", color: "red" };
+        }
+
+        /* ============================================================
+           STATE
+        ============================================================ */
+        let currentUser = null;
+        let selectedMood = null;
+        let todayMoodData = null;
+        let answeredCount = 0;
+
+        function getToday() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        /* ============================================================
+           AUTH & INITIALISATION
+        ============================================================ */
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
+                currentUser = user;
                 document.getElementById('nav-email').innerText = user.email;
                 document.getElementById('view-loading').classList.add('hidden');
+                
                 const appView = document.getElementById('view-app');
                 appView.classList.remove('hidden');
                 appView.classList.add('flex');
-                window.currentUser = user; 
+
+                document.getElementById('today-date-label').innerText = new Date().toLocaleDateString('en-GB', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                });
+
+                renderQuestionnaire();
+                
+                await loadTodayMood();
+                await loadMoodHistory();
+                await checkConsecutiveLowMood();
             } else {
-                window.location.href = 'login.html'; 
+                window.location.href = 'login.html';
             }
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'login.html';
-            });
+            signOut(auth).then(() => { window.location.href = 'login.html'; });
         });
+
+        /* ============================================================
+           TAB SWITCHING
+        ============================================================ */
+        window.switchTab = function(tab) {
+            ['mood', 'assessment', 'insights'].forEach(t => {
+                const panel = document.getElementById(`tab-${t}`);
+                const btn = document.querySelector(`[data-tab="${t}"]`);
+                if(panel) panel.classList.add('hidden');
+                if(btn) {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-gray-400');
+                }
+            });
+            
+            const activePanel = document.getElementById(`tab-${tab}`);
+            const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
+            if(activePanel) {
+                activePanel.classList.remove('hidden');
+                activePanel.classList.add('panel-appear');
+            }
+            if(activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-gray-400');
+            }
+            lucide.createIcons();
+
+            if (tab === 'insights') {
+                if (typeof window.loadInsights === 'function') {
+                    window.loadInsights();
+                }
+            }
+        };
+
+        /* ============================================================
+           DAILY MOOD TAB LOGIC
+        ============================================================ */
+        async function loadTodayMood() {
+            const today = getToday();
+            const docRef = doc(db, 'moodEntries', `${currentUser.uid}_${today}`);
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                todayMoodData = snap.data();
+                selectedMood = todayMoodData.moodLevel;
+                highlightMoodBtn(selectedMood);
+                document.getElementById('mood-note').value = todayMoodData.note || '';
+                document.getElementById('save-mood-btn').textContent = 'Update Today\'s Mood';
+                document.getElementById('save-mood-btn').disabled = false;
+                
+                const badge = document.getElementById('mood-saved-badge');
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+                lucide.createIcons();
+            }
+        }
+
+        window.selectMood = function(level) {
+            selectedMood = level;
+            highlightMoodBtn(level);
+            document.getElementById('save-mood-btn').disabled = false;
+        };
+
+        function highlightMoodBtn(level) {
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                btn.style.borderColor = '';
+            });
+            const btn = document.querySelector(`.mood-btn[data-mood="${level}"]`);
+            if (btn) btn.classList.add('selected');
+        }
+
+        window.saveMood = async function() {
+            if (!selectedMood) return;
+            const today = getToday();
+            const note = document.getElementById('mood-note').value.trim();
+            const saveBtn = document.getElementById('save-mood-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                const docRef = doc(db, 'moodEntries', `${currentUser.uid}_${today}`);
+                await setDoc(docRef, {
+                    employeeId: currentUser.uid,
+                    moodLevel: selectedMood,
+                    date: today,
+                    note: note,
+                    savedAt: new Date().toISOString()
+                });
+
+                saveBtn.textContent = 'Update Today\'s Mood';
+                saveBtn.disabled = false;
+                
+                const badge = document.getElementById('mood-saved-badge');
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+
+                const box = document.getElementById('mood-feedback');
+                box.className = `mt-4 p-3 rounded-xl border text-sm bg-[#177a64]/20 border-[#5f9f87]/50 text-[#8ee4d2]`;
+                box.textContent = "Mood saved successfully! Thank you for checking in.";
+                box.classList.remove('hidden');
+                
+                lucide.createIcons();
+                
+                await loadMoodHistory();
+                await checkConsecutiveLowMood();
+
+            } catch (err) {
+                console.error("Error saving mood:", err);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Today\'s Mood';
+            }
+        };
+
+        async function loadMoodHistory() {
+            const today = new Date();
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                days.push(d.toISOString().split('T')[0]);
+            }
+
+            const moodMap = {};
+            await Promise.all(days.map(async (dateStr) => {
+                const docRef = doc(db, 'moodEntries', `${currentUser.uid}_${dateStr}`);
+                const snap = await getDoc(docRef);
+                moodMap[dateStr] = snap.exists() ? snap.data().moodLevel : null;
+            }));
+
+            const chartEl = document.getElementById('mood-history-chart');
+            const labelsEl = document.getElementById('mood-history-labels');
+            if(!chartEl || !labelsEl) return;
+
+            const moodColors = { 1: '#ef4444', 2: '#f97316', 3: '#eab308', 4: '#3b82f6', 5: '#10b981' };
+            const moodEmoji = { 1: '😞', 2: '😔', 3: '😐', 4: '🙂', 5: '😊' };
+
+            chartEl.innerHTML = '';
+            labelsEl.innerHTML = '';
+
+            days.forEach(dateStr => {
+                const val = moodMap[dateStr];
+                const dayName = new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short' });
+                const heightPct = val ? (val / 5) * 100 : 0;
+
+                const barWrap = document.createElement('div');
+                barWrap.className = 'flex-1 flex flex-col items-center justify-end h-full';
+                if (val) {
+                    barWrap.innerHTML = `
+                        <span class="text-sm mb-1">${moodEmoji[val]}</span>
+                        <div class="w-full rounded-t-md transition-all duration-500 ease-out" style="height:${heightPct}%; background:${moodColors[val]}; min-height:4px;" title="Mood: ${val}"></div>
+                    `;
+                } else {
+                    barWrap.innerHTML = `<div class="w-full rounded-t-md bg-gray-700 opacity-30" style="height:10%"></div>`;
+                }
+                chartEl.appendChild(barWrap);
+
+                const labelEl = document.createElement('span');
+                labelEl.className = 'flex-1 text-center';
+                labelEl.textContent = dayName;
+                labelsEl.appendChild(labelEl);
+            });
+        }
+
+        async function checkConsecutiveLowMood() {
+            const today = new Date();
+            let consecutive = 0;
+
+            for (let i = 0; i < 14; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const snap = await getDoc(doc(db, 'moodEntries', `${currentUser.uid}_${dateStr}`));
+                if (snap.exists() && (snap.data().moodLevel === 1 || snap.data().moodLevel === 2)) {
+                    consecutive++;
+                } else {
+                    break;
+                }
+            }
+
+            const alertEl = document.getElementById('consecutive-alert');
+            if(alertEl) {
+                if (consecutive >= 14) {
+                    alertEl.classList.remove('hidden');
+                } else {
+                    alertEl.classList.add('hidden');
+                }
+            }
+
+            const streakLabel = document.getElementById('mood-streak-label');
+            if(streakLabel) {
+                if (consecutive >= 2) {
+                    streakLabel.textContent = `⚠️ ${consecutive} consecutive low-mood days`;
+                    streakLabel.className = 'text-xs text-orange-400';
+                } else {
+                    streakLabel.textContent = '';
+                }
+            }
+        }
+
+        /* ============================================================
+           SELF-ASSESSMENT TAB LOGIC
+        ============================================================ */
+        function renderQuestionnaire() {
+            const form = document.getElementById('assessment-form');
+            if(!form) return;
+            form.innerHTML = '';
+            answeredCount = 0;
+
+            window.QUESTIONS.forEach((q, idx) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'border border-gray-700 rounded-xl p-4 bg-gray-900/50';
+                qDiv.innerHTML = `
+                    <p class="text-sm font-medium text-gray-200 mb-3">
+                        <span class="text-[#5f9f87] font-bold mr-2">${idx + 1}.</span>${q.text}
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        ${SCORE_OPTIONS.map(opt => `
+                            <div class="q-option">
+                                <input type="radio" name="${q.id}" id="${q.id}-${opt.value}" value="${opt.value}"
+                                    onchange="onAnswerChange('${q.id}')">
+                                <label for="${q.id}-${opt.value}">${opt.label}</label>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                form.appendChild(qDiv);
+            });
+        }
+
+        window.onAnswerChange = function(qId) {
+            const answered = new Set();
+            window.QUESTIONS.forEach(q => {
+                const checked = document.querySelector(`input[name="${q.id}"]:checked`);
+                if (checked) answered.add(q.id);
+            });
+            answeredCount = answered.size;
+            const pct = (answeredCount / window.QUESTIONS.length) * 100;
+            document.getElementById('assessment-progress-bar').style.width = pct + '%';
+            document.getElementById('progress-label').textContent = `${answeredCount} / ${window.QUESTIONS.length} answered`;
+        };
+
+        window.submitAssessment = async function() {
+            const responses = {};
+            let totalScore = 0;
+            let allAnswered = true;
+
+            window.QUESTIONS.forEach(q => {
+                const checked = document.querySelector(`input[name="${q.id}"]:checked`);
+                if (!checked) {
+                    allAnswered = false;
+                } else {
+                    const val = parseInt(checked.value);
+                    responses[q.id] = val;
+                    totalScore += val;
+                }
+            });
+
+            if (!allAnswered) {
+                const errEl = document.getElementById('assessment-error');
+                errEl.textContent = 'Please answer all 10 questions before submitting.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+            document.getElementById('assessment-error').classList.add('hidden');
+
+            const submitBtn = document.getElementById('submit-assessment-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
+            const risk = getRiskLevel(totalScore);
+            const dateNow = new Date().toISOString();
+            const dateStr = getToday();
+
+            const categoryScores = {};
+            window.QUESTIONS.forEach(q => {
+                categoryScores[q.category] = (categoryScores[q.category] || 0) + (responses[q.id] || 0);
+            });
+            const topCategories = Object.entries(categoryScores)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(e => e[0]);
+
+            const recommendedModules = window.MODULE_CATALOGUE.filter(m => topCategories.includes(m.category)).slice(0, 3);
+            if (recommendedModules.length === 0) recommendedModules.push(...window.MODULE_CATALOGUE.slice(0, 2));
+
+            try {
+                const assessRef = await addDoc(collection(db, 'selfAssessments'), {
+                    employeeId: currentUser.uid,
+                    responses: responses,
+                    totalScore: totalScore,
+                    riskLevel: risk.level,
+                    date: dateStr,
+                    submittedAt: dateNow
+                });
+
+                await Promise.all(recommendedModules.map(mod =>
+                    addDoc(collection(db, 'recommendations'), {
+                        employeeId: currentUser.uid,
+                        moduleId: mod.id,
+                        moduleTitle: mod.title,
+                        assessmentId: assessRef.id,
+                        riskLevel: risk.level,
+                        dateGenerated: dateStr,
+                        generatedAt: dateNow
+                    })
+                ));
+
+                showResults(totalScore, risk, recommendedModules);
+            } catch (err) {
+                console.error("Error saving assessment:", err);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Assessment';
+            }
+        };
+
+        function showResults(score, risk, modules) {
+            document.getElementById('assessment-form-container').classList.add('hidden');
+            const resultsEl = document.getElementById('assessment-results');
+            resultsEl.classList.remove('hidden');
+
+            const circumference = 100;
+            const pct = (score / 30) * circumference;
+            setTimeout(() => {
+                document.getElementById('score-circle').setAttribute('stroke-dasharray', `${pct} ${circumference - pct}`);
+            }, 100);
+
+            const colorMap = {
+                emerald: { badge: 'bg-emerald-900/40 text-emerald-300 border border-emerald-700', circle: '#10b981' },
+                yellow:  { badge: 'bg-yellow-900/40 text-yellow-300 border border-yellow-700',  circle: '#eab308' },
+                orange:  { badge: 'bg-orange-900/40 text-orange-300 border border-orange-700',  circle: '#f97316' },
+                red:     { badge: 'bg-red-900/40 text-red-300 border border-red-700',           circle: '#ef4444' }
+            };
+            const colours = colorMap[risk.color];
+            document.getElementById('score-circle').setAttribute('stroke', colours.circle);
+            document.getElementById('result-badge').className = `px-3 py-1 rounded-full text-xs font-bold ${colours.badge}`;
+            document.getElementById('result-badge').textContent = `${risk.label} Risk`;
+            document.getElementById('score-number').textContent = score;
+
+            const descriptions = {
+                low:      { title: "You're doing well", desc: "Your wellbeing scores suggest you're managing effectively. Keep up the good habits!" },
+                moderate: { title: "Some areas to watch", desc: "There are a few areas where some additional support or resources could help you thrive at work." },
+                high:     { title: "You may benefit from support", desc: "Your responses suggest you're experiencing notable levels of stress or burnout. Please consider speaking to a Wellbeing Ambassador." },
+                "very-high": { title: "Support is strongly recommended", desc: "Your responses indicate significant distress. Please consider speaking with a professional as well as a Wellbeing Ambassador." }
+            };
+            const d = descriptions[risk.level];
+            document.getElementById('result-title').textContent = d.title;
+            document.getElementById('result-description').textContent = d.desc;
+
+            if (risk.level === 'very-high') {
+                document.getElementById('professional-support-alert').classList.remove('hidden');
+            }
+            if (risk.level === 'high' || risk.level === 'very-high') {
+                document.getElementById('book-session-prompt').classList.remove('hidden');
+            }
+
+            const modContainer = document.getElementById('recommended-modules');
+            modContainer.innerHTML = modules.map(mod => `
+                <div class="flex items-center space-x-3 p-3 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#5f9f87] transition-colors">
+                    <div class="p-2 bg-[#177a64]/20 rounded-lg flex-shrink-0">
+                        <i data-lucide="${mod.icon}" class="w-4 h-4 text-[#5f9f87]"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-white truncate">${mod.title}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">${mod.description}</p>
+                    </div>
+                    <a href="resources.html" class="flex-shrink-0 text-xs text-[#5f9f87] hover:text-[#8ee4d2] font-medium">View →</a>
+                </div>
+            `).join('');
+
+            lucide.createIcons();
+        }
+
+        window.resetAssessment = function() {
+            document.getElementById('assessment-results').classList.add('hidden');
+            document.getElementById('assessment-form-container').classList.remove('hidden');
+            document.getElementById('professional-support-alert').classList.add('hidden');
+            document.getElementById('book-session-prompt').classList.add('hidden');
+            document.getElementById('assessment-progress-bar').style.width = '0%';
+            document.getElementById('progress-label').textContent = '0 / 10 answered';
+            renderQuestionnaire();
+            document.getElementById('submit-assessment-btn').disabled = false;
+            document.getElementById('submit-assessment-btn').textContent = 'Submit Assessment';
+            lucide.createIcons();
+        };
+
+        /* ============================================================
+           INSIGHTS TAB LOGIC
+        ============================================================ */
+        window.loadInsights = async function() {
+            const today = new Date();
+            const days30 = [];
+            for (let i = 0; i < 30; i++) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                days30.push(d.toISOString().split('T')[0]);
+            }
+
+            let moodSum = 0;
+            let moodCount = 0;
+            await Promise.all(days30.map(async dateStr => {
+                const snap = await getDoc(doc(db, 'moodEntries', `${currentUser.uid}_${dateStr}`));
+                if (snap.exists()) {
+                    moodSum += snap.data().moodLevel;
+                    moodCount++;
+                }
+            }));
+
+            document.getElementById('stat-avg-mood').textContent = moodCount > 0 ? (moodSum / moodCount).toFixed(1) : '—';
+            document.getElementById('stat-checkins').textContent = moodCount;
+
+            // --- 1. ASSESSMENTS HISTORY (With Pagination) ---
+            const assessQ = query(
+                collection(db, 'selfAssessments'),
+                where('employeeId', '==', currentUser.uid)
+            );
+            const assessSnap = await getDocs(assessQ);
+            
+            let assessments = [];
+            assessSnap.forEach(d => assessments.push(d.data()));
+            assessments.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+            
+            document.getElementById('stat-assessments').textContent = assessments.length;
+
+            const histList = document.getElementById('assessment-history-list');
+            const viewMoreBtn = document.getElementById('view-more-assessments-btn');
+
+            if (assessments.length === 0) {
+                histList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">No assessments yet.</p>';
+                viewMoreBtn.classList.add('hidden');
+            } else {
+                const riskBadgeClass = { low: 'bg-emerald-900/40 text-emerald-300', moderate: 'bg-yellow-900/40 text-yellow-300', high: 'bg-orange-900/40 text-orange-300', 'very-high': 'bg-red-900/40 text-red-300' };
+                
+                histList.innerHTML = assessments.map((data, index) => {
+                    const risk = getRiskLevel(data.totalScore);
+                    const hiddenClass = index >= 4 ? 'hidden hidden-assessment' : ''; // Hide items after the 4th
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-gray-900 border border-gray-700 rounded-xl ${hiddenClass}">
+                            <div>
+                                <p class="text-sm font-medium text-white">${data.date}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Score: ${data.totalScore} / 30</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-semibold ${riskBadgeClass[data.riskLevel] || ''}">${risk.label} Risk</span>
+                        </div>
+                    `;
+                }).join('');
+
+                if (assessments.length > 4) {
+                    viewMoreBtn.classList.remove('hidden');
+                    viewMoreBtn.textContent = 'View More';
+                    viewMoreBtn.onclick = () => {
+                        const hiddenItems = document.querySelectorAll('.hidden-assessment');
+                        const isExpanding = hiddenItems[0].classList.contains('hidden');
+
+                        hiddenItems.forEach(item => {
+                            if (isExpanding) {
+                                item.classList.remove('hidden');
+                            } else {
+                                item.classList.add('hidden');
+                            }
+                        });
+                        viewMoreBtn.textContent = isExpanding ? 'View Less' : 'View More';
+                    };
+                } else {
+                    viewMoreBtn.classList.add('hidden');
+                }
+            }
+
+            // --- 2. RECOMMENDATIONS HISTORY ---
+            const recoQ = query(
+                collection(db, 'recommendations'),
+                where('employeeId', '==', currentUser.uid)
+            );
+            const recoSnap = await getDocs(recoQ);
+            
+            let allRecommendations = [];
+            recoSnap.forEach(d => allRecommendations.push(d.data()));
+            // Sort by newest first
+            allRecommendations.sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt));
+
+            // Deduplicate: Because it is sorted by newest first, the Set will only keep the most recent instance of each module
+            const seenModules = new Set();
+            const uniqueRecommendations = [];
+
+            for (const req of allRecommendations) {
+                if (!seenModules.has(req.moduleId)) {
+                    seenModules.add(req.moduleId);
+                    uniqueRecommendations.push(req);
+                }
+            }
+
+            const recoList = document.getElementById('recommendations-history-list');
+            if (uniqueRecommendations.length === 0) {
+                recoList.innerHTML = '<p class="text-gray-500 text-sm text-center py-4">Complete a self-assessment to receive recommendations.</p>';
+            } else {
+                recoList.innerHTML = uniqueRecommendations.slice(0, 5).map(data => {
+                    const mod = window.MODULE_CATALOGUE.find(m => m.id === data.moduleId);
+                    return `
+                        <div class="flex items-center space-x-3 p-3 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#5f9f87] transition-colors cursor-pointer" onclick="window.location.href='resources.html'">
+                            <div class="p-2 bg-[#177a64]/20 rounded-lg flex-shrink-0">
+                                <i data-lucide="${mod ? mod.icon : 'book'}" class="w-4 h-4 text-[#5f9f87]"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-white truncate">${data.moduleTitle}</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Recommended on ${data.dateGenerated}</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500"></i>
+                        </div>
+                    `;
+                }).join('');
+                lucide.createIcons();
+            }
+        };
+
     </script>
 </body>
 </html>

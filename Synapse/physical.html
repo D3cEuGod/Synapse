@@ -6,8 +6,11 @@
     <title>Synapse - Physical Wellbeing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <style>.hidden { display: none !important; }</style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hidden { display: none !important; }
+        .input-error { border-color: #ef4444 !important; }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
 
@@ -135,12 +138,14 @@
                         <p class="text-xs text-gray-500 mt-1">Used to calculate calories burned</p>
                     </div>
                 </div>
+                <!-- live calorie preview shown when all three activity fields are filled -->
                 <div id="activity-calories-preview" class="hidden p-3 bg-gray-900/50 rounded-lg border border-gray-600 text-sm text-gray-300">
                     Estimated calories burned: <span id="calories-preview-value" class="font-bold text-orange-400"></span> kcal
                 </div>
                 <button id="log-activity-btn" class="px-4 py-2 bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium rounded-lg transition-colors">
                     Log Activity
                 </button>
+                <!-- logged activities for today rendered here dynamically -->
                 <div id="activity-log-list" class="space-y-2 pt-2"></div>
             </div>
         </section>
@@ -183,7 +188,65 @@
                 <button id="log-meal-btn" class="px-4 py-2 bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium rounded-lg transition-colors">
                     Log Meal
                 </button>
+                <!-- logged meals for today rendered here dynamically -->
                 <div id="meal-log-list" class="space-y-2 pt-2"></div>
+            </div>
+        </section>
+
+        <!-- bmi calculator section -->
+        <section>
+            <h2 class="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                <i data-lucide="scale" class="w-5 h-5 text-[#5f9f87]"></i>
+                <span>BMI Calculator</span>
+            </h2>
+            <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 space-y-4">
+                <div id="bmi-error" class="hidden p-3 bg-red-900/30 text-red-400 text-sm rounded-lg border border-red-800/50"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Height (cm)</label>
+                        <input type="number" id="bmi-height" min="50" max="300" placeholder="e.g. 175"
+                               class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Weight (kg)</label>
+                        <input type="number" id="bmi-weight" min="20" max="500" placeholder="e.g. 70"
+                               class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm" />
+                    </div>
+                </div>
+                <button id="calc-bmi-btn" class="px-4 py-2 bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium rounded-lg transition-colors">
+                    Calculate BMI
+                </button>
+                <!-- bmi result card shown after calculation -->
+                <div id="bmi-result" class="hidden p-4 bg-gray-900 rounded-lg border border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-400 mb-1">Your BMI</p>
+                            <p id="bmi-value" class="text-3xl font-bold"></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-400 mb-1">Category</p>
+                            <p id="bmi-category" class="text-lg font-semibold"></p>
+                        </div>
+                    </div>
+                    <!-- colour-coded progress bar showing where bmi falls on the scale -->
+                    <div class="mt-3 w-full bg-gray-700 rounded-full h-2">
+                        <div id="bmi-bar" class="h-2 rounded-full transition-all" style="width:0%"></div>
+                    </div>
+                    <p id="bmi-advice" class="text-xs text-gray-400 mt-2"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- weekly step history chart section -->
+        <!-- fetches the last 7 days of step entries from firestore and renders a bar chart -->
+        <section>
+            <h2 class="text-lg font-semibold text-white mb-4 flex items-center space-x-2">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#5f9f87]"></i>
+                <span>Weekly Step History</span>
+            </h2>
+            <div class="bg-gray-800 rounded-xl p-5 border border-gray-700">
+                <p id="chart-empty" class="hidden text-sm text-gray-500 italic">No step data found for the past 7 days.</p>
+                <canvas id="steps-chart" height="100"></canvas>
             </div>
         </section>
 
@@ -217,25 +280,25 @@
 
     lucide.createIcons();
 
-    // met values per activity type, used in the calories burned formula
+    // met values per activity type used for calorie burn estimation
     const MET = {
         running: 9.8, cycling: 7.5, swimming: 8.0,
         gym: 5.0, yoga: 2.5, walking: 3.5,
         sports: 6.0, hiit: 10.0
     };
 
-    // calories burned = met * weight(kg) * duration(hours)
+    // formula: calories = MET x weight(kg) x duration(hrs)
     function calcCaloriesBurned(activityKey, durationMins, weightKg) {
         const met = MET[activityKey] || 5.0;
         return Math.round(met * weightKg * (durationMins / 60));
     }
 
-    // returns today's date as a yyyy-mm-dd string for consistent firestore doc ids
     const todayStr = () => new Date().toISOString().split('T')[0];
 
     let uid = null;
+    let stepsChartInstance = null;
 
-    // listen for auth state, redirect to login if not signed in
+    // wait for firebase auth state before showing the app
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             uid = user.uid;
@@ -255,7 +318,7 @@
         signOut(auth).then(() => { window.location.href = 'login.html'; });
     });
 
-    // show a temporary feedback message, auto-hides after 3.5s
+    // show a timed feedback message in the given element id
     function showMsg(id, msg, isError = false) {
         const el = document.getElementById(id);
         el.innerText = msg;
@@ -263,15 +326,16 @@
         setTimeout(() => el.classList.add('hidden'), 3500);
     }
 
-    // load all three data sources then refresh the summary
     async function loadAll() {
         await loadSteps();
         await loadActivities();
         await loadMeals();
+        await loadWeeklyStepsChart();
         updateSummary();
     }
 
-    // fetch today's step entry from firestore and populate the inputs
+    // step tracking
+
     async function loadSteps() {
         const ref = doc(db, 'users', uid, 'stepEntries', todayStr());
         const snap = await getDoc(ref);
@@ -282,27 +346,29 @@
         }
     }
 
-    // save or overwrite today's step entry (same doc id = same day = edit behaviour)
     document.getElementById('save-steps-btn').addEventListener('click', async () => {
-        const steps = parseInt(document.getElementById('step-input').value);
+        const stepsEl = document.getElementById('step-input');
+        const steps = parseInt(stepsEl.value);
         const goal = parseInt(document.getElementById('step-goal-input').value) || 10000;
 
+        // clear previous validation state
+        stepsEl.classList.remove('input-error');
+
         if (isNaN(steps) || steps < 0) {
+            stepsEl.classList.add('input-error');
             showMsg('step-error', 'Please enter a valid step count (must be 0 or more).', true);
             return;
         }
         if (steps > 200000) {
+            stepsEl.classList.add('input-error');
             showMsg('step-error', 'Step count seems too high. Please check your entry.', true);
             return;
         }
 
         const ref = doc(db, 'users', uid, 'stepEntries', todayStr());
         await setDoc(ref, {
-            steps,
-            goal,
-            date: todayStr(),
-            lastModified: new Date().toISOString(),
-            userId: uid
+            steps, goal, date: todayStr(),
+            lastModified: new Date().toISOString(), userId: uid
         });
 
         // [GAMIFICATION] Calculate and credit points based on daily steps
@@ -310,13 +376,15 @@
 
 
         showMsg('step-success', `Steps saved: ${steps.toLocaleString()} / ${goal.toLocaleString()}`);
+        // refresh chart after saving so today's bar updates immediately
+        await loadWeeklyStepsChart();
         updateSummary();
     });
 
-    // in-memory store for today's activity entries
+    // activity log
+
     let activityEntries = [];
 
-    // fetch today's activity entries from firestore
     async function loadActivities() {
         activityEntries = [];
         const ref = collection(db, 'users', uid, 'activityEntries');
@@ -326,7 +394,6 @@
         renderActivityList();
     }
 
-    // render the activity list below the form
     function renderActivityList() {
         const container = document.getElementById('activity-log-list');
         if (activityEntries.length === 0) {
@@ -334,28 +401,27 @@
             return;
         }
         container.innerHTML = activityEntries.map(e => `
-                <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
-                    <div>
-                        <span class="font-medium text-sm text-white capitalize">${e.activityType}</span>
-                        <span class="text-xs text-gray-400 ml-2">${e.durationMins} min · ${e.weightKg}kg</span>
-                        <span class="text-xs text-orange-400 ml-2">${e.caloriesBurned} kcal burned</span>
-                    </div>
-                    <button onclick="deleteActivity('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+            <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
+                <div>
+                    <span class="font-medium text-sm text-white capitalize">${e.activityType}</span>
+                    <span class="text-xs text-gray-400 ml-2">${e.durationMins} min · ${e.weightKg}kg</span>
+                    <span class="text-xs text-orange-400 ml-2">${e.caloriesBurned} kcal burned</span>
                 </div>
-            `).join('');
+                <button onclick="deleteActivity('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `).join('');
         lucide.createIcons();
     }
 
-    // delete a single activity entry by its firestore doc id
     window.deleteActivity = async (id) => {
         await deleteDoc(doc(db, 'users', uid, 'activityEntries', id));
         await loadActivities();
         updateSummary();
     };
 
-    // show a live calorie preview whenever the user changes type, duration, or weight
+    // update calorie preview whenever any of the three activity fields change
     function updateCaloriePreview() {
         const type = document.getElementById('activity-type').value;
         const duration = parseFloat(document.getElementById('activity-duration').value);
@@ -374,35 +440,39 @@
         document.getElementById(id).addEventListener('input', updateCaloriePreview);
     });
 
-    // validate and save a new activity entry to firestore
     document.getElementById('log-activity-btn').addEventListener('click', async () => {
-        const activityType = document.getElementById('activity-type').value;
-        const durationMins = parseFloat(document.getElementById('activity-duration').value);
-        const weightKg = parseFloat(document.getElementById('activity-weight').value);
+        const typeEl = document.getElementById('activity-type');
+        const durationEl = document.getElementById('activity-duration');
+        const weightEl = document.getElementById('activity-weight');
 
-        if (!activityType) { showMsg('activity-error', 'Please select an activity type.', true); return; }
-        if (!durationMins || durationMins <= 0) { showMsg('activity-error', 'Please enter a valid duration (greater than 0).', true); return; }
-        if (!weightKg || weightKg < 20) { showMsg('activity-error', 'Please enter a valid weight (minimum 20kg).', true); return; }
+        // clear previous validation state
+        typeEl.classList.remove('input-error');
+        durationEl.classList.remove('input-error');
+        weightEl.classList.remove('input-error');
+
+        const activityType = typeEl.value;
+        const durationMins = parseFloat(durationEl.value);
+        const weightKg = parseFloat(weightEl.value);
+
+        // validate all three fields and highlight any that are invalid
+        let hasError = false;
+        if (!activityType) { typeEl.classList.add('input-error'); hasError = true; }
+        if (!durationMins || durationMins <= 0) { durationEl.classList.add('input-error'); hasError = true; }
+        if (!weightKg || weightKg < 20) { weightEl.classList.add('input-error'); hasError = true; }
+
+        if (hasError) { showMsg('activity-error', 'Please fill in all fields correctly.', true); return; }
 
         const caloriesBurned = calcCaloriesBurned(activityType, durationMins, weightKg);
-
         await addDoc(collection(db, 'users', uid, 'activityEntries'), {
-            activityType,
-            durationMins,
-            weightKg,
-            caloriesBurned,
-            date: todayStr(),
-            loggedAt: new Date().toISOString(),
-            userId: uid
+            activityType, durationMins, weightKg, caloriesBurned,
+            date: todayStr(), loggedAt: new Date().toISOString(), userId: uid
         });
 
         // [GAMIFICATION] Award fixed points for completing a workout session
         await pointsManager.awardPoints(uid, 1, "ACTIVITY");
 
         showMsg('activity-success', `${activityType} logged — ${caloriesBurned} kcal burned.`);
-        document.getElementById('activity-type').value = '';
-        document.getElementById('activity-duration').value = '';
-        document.getElementById('activity-weight').value = '';
+        typeEl.value = ''; durationEl.value = ''; weightEl.value = '';
         document.getElementById('activity-calories-preview').classList.add('hidden');
         await loadActivities();
         updateSummary();
@@ -429,17 +499,17 @@
             return;
         }
         container.innerHTML = mealEntries.map(e => `
-                <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
-                    <div>
-                        <span class="font-medium text-sm text-white">${e.mealType}</span>
-                        <span class="text-xs text-gray-400 ml-2">${e.portion} portion</span>
-                        <span class="text-xs text-blue-400 ml-2">${e.totalCalories} kcal</span>
-                    </div>
-                    <button onclick="deleteMeal('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+            <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
+                <div>
+                    <span class="font-medium text-sm text-white">${e.mealType}</span>
+                    <span class="text-xs text-gray-400 ml-2">${e.portion} portion</span>
+                    <span class="text-xs text-blue-400 ml-2">${e.totalCalories} kcal</span>
                 </div>
-            `).join('');
+                <button onclick="deleteMeal('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `).join('');
         lucide.createIcons();
     }
 
@@ -451,36 +521,203 @@
     };
 
     // validate and save a new meal entry to firestore
+    // log meal - highlights invalid fields red
     document.getElementById('log-meal-btn').addEventListener('click', async () => {
-        const mealType = document.getElementById('meal-type').value;
-        const portion = document.getElementById('meal-portion').value;
-        const totalCalories = parseInt(document.getElementById('meal-calories').value);
+        const typeEl = document.getElementById('meal-type');
+        const portionEl = document.getElementById('meal-portion');
+        const caloriesEl = document.getElementById('meal-calories');
 
-        if (!mealType) { showMsg('meal-error', 'Please select a meal type.', true); return; }
-        if (!portion) { showMsg('meal-error', 'Please select a portion size.', true); return; }
-        if (isNaN(totalCalories) || totalCalories < 0) { showMsg('meal-error', 'Please enter a valid calorie amount (0 or more).', true); return; }
+        // clear previous validation state
+        typeEl.classList.remove('input-error');
+        portionEl.classList.remove('input-error');
+        caloriesEl.classList.remove('input-error');
+
+        const mealType = typeEl.value;
+        const portion = portionEl.value;
+        const totalCalories = parseInt(caloriesEl.value);
+
+        // validate all three fields and highlight any that are invalid
+        let hasError = false;
+        if (!mealType) { typeEl.classList.add('input-error'); hasError = true; }
+        if (!portion) { portionEl.classList.add('input-error'); hasError = true; }
+        if (isNaN(totalCalories) || totalCalories < 0) { caloriesEl.classList.add('input-error'); hasError = true; }
+
+        if (hasError) { showMsg('meal-error', 'Please fill in all fields correctly.', true); return; }
 
         await addDoc(collection(db, 'users', uid, 'mealEntries'), {
-            mealType,
-            portion,
-            totalCalories,
-            date: todayStr(),
-            loggedAt: new Date().toISOString(),
-            userId: uid
+            mealType, portion, totalCalories,
+            date: todayStr(), loggedAt: new Date().toISOString(), userId: uid
         });
 
         // [GAMIFICATION] Credit points for maintaining nutrition logs
         await pointsManager.awardPoints(uid, totalCalories, "MEAL");
 
         showMsg('meal-success', `${mealType} logged — ${totalCalories} kcal.`);
-        document.getElementById('meal-type').value = '';
-        document.getElementById('meal-portion').value = '';
-        document.getElementById('meal-calories').value = '';
+        typeEl.value = ''; portionEl.value = ''; caloriesEl.value = '';
         await loadMeals();
         updateSummary();
     });
 
-    // recalculate and display the daily summary from current in-memory data
+    // bmi calculator
+    // calculates bmi from height and weight, shows category and colour-coded bar
+    // bmi = weight(kg) / height(m)^2
+
+    document.getElementById('calc-bmi-btn').addEventListener('click', () => {
+        const heightEl = document.getElementById('bmi-height');
+        const weightEl = document.getElementById('bmi-weight');
+
+        // clear previous validation state
+        heightEl.classList.remove('input-error');
+        weightEl.classList.remove('input-error');
+
+        const heightCm = parseFloat(heightEl.value);
+        const weightKg = parseFloat(weightEl.value);
+
+        let hasError = false;
+        if (!heightCm || heightCm < 50 || heightCm > 300) { heightEl.classList.add('input-error'); hasError = true; }
+        if (!weightKg || weightKg < 20 || weightKg > 500) { weightEl.classList.add('input-error'); hasError = true; }
+
+        if (hasError) {
+            showMsg('bmi-error', 'Please enter a valid height (50–300 cm) and weight (20–500 kg).', true);
+            return;
+        }
+
+        const heightM = heightCm / 100;
+        const bmi = parseFloat((weightKg / (heightM * heightM)).toFixed(1));
+
+        // determine category, colour, bar width, and advice based on which range bmi falls in
+        let category, colour, barWidth, advice;
+        if (bmi < 18.5) {
+            category = 'Underweight'; colour = 'text-blue-400'; barWidth = '15%';
+            advice = 'Consider speaking to a healthcare professional about healthy weight gain.';
+        } else if (bmi < 25) {
+            category = 'Healthy Weight'; colour = 'text-green-400'; barWidth = '40%';
+            advice = 'Great — you are within the healthy BMI range. Keep it up!';
+        } else if (bmi < 30) {
+            category = 'Overweight'; colour = 'text-yellow-400'; barWidth = '65%';
+            advice = 'Regular exercise and a balanced diet can help maintain a healthy weight.';
+        } else {
+            category = 'Obese'; colour = 'text-red-400'; barWidth = '90%';
+            advice = 'Consider consulting a healthcare professional for personalised advice.';
+        }
+
+        const barColour = bmi < 18.5 ? 'bg-blue-400' : bmi < 25 ? 'bg-green-400' : bmi < 30 ? 'bg-yellow-400' : 'bg-red-400';
+
+        document.getElementById('bmi-value').innerText = bmi;
+        document.getElementById('bmi-value').className = `text-3xl font-bold ${colour}`;
+        document.getElementById('bmi-category').innerText = category;
+        document.getElementById('bmi-category').className = `text-lg font-semibold ${colour}`;
+        document.getElementById('bmi-bar').className = `h-2 rounded-full transition-all ${barColour}`;
+        document.getElementById('bmi-bar').style.width = barWidth;
+        document.getElementById('bmi-advice').innerText = advice;
+        document.getElementById('bmi-result').classList.remove('hidden');
+    });
+
+    // weekly step history chart
+    // builds an array of the last 7 date strings, fetches each step doc from
+    // firestore, then renders a chart.js bar chart with a goal reference line
+
+    async function loadWeeklyStepsChart() {
+        // generate last 7 days as YYYY-MM-DD strings including today
+        const dates = [];
+        const labels = [];
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+            labels.push(i === 0 ? 'Today' : dayNames[d.getDay()]);
+        }
+
+        // fetch each day's step doc in parallel
+        const fetches = dates.map(dateStr =>
+            getDoc(doc(db, 'users', uid, 'stepEntries', dateStr))
+        );
+        const snaps = await Promise.all(fetches);
+
+        const stepData = snaps.map(s => s.exists() ? (s.data().steps || 0) : 0);
+        const goalData = snaps.map(s => s.exists() ? (s.data().goal || 10000) : 10000);
+        // use the most recent available goal as the reference line value
+        const referenceGoal = goalData[goalData.length - 1];
+
+        const hasAnyData = stepData.some(v => v > 0);
+        if (!hasAnyData) {
+            document.getElementById('chart-empty').classList.remove('hidden');
+            document.getElementById('steps-chart').classList.add('hidden');
+            return;
+        }
+        document.getElementById('chart-empty').classList.add('hidden');
+        document.getElementById('steps-chart').classList.remove('hidden');
+
+        // destroy previous chart instance before redrawing to avoid canvas reuse error
+        if (stepsChartInstance) stepsChartInstance.destroy();
+
+        const ctx = document.getElementById('steps-chart').getContext('2d');
+        stepsChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    {
+                        label: 'Steps',
+                        data: stepData,
+                        // bars that meet the goal are teal, those below are muted
+                        backgroundColor: stepData.map((v, i) =>
+                            v >= goalData[i] ? 'rgba(95, 159, 135, 0.85)' : 'rgba(95, 159, 135, 0.35)'
+                        ),
+                        borderColor: stepData.map((v, i) =>
+                            v >= goalData[i] ? '#5f9f87' : '#3d6b5a'
+                        ),
+                        borderWidth: 1,
+                        borderRadius: 6,
+                    },
+                    {
+                        // dashed goal reference line drawn as a line dataset
+                        label: 'Goal',
+                        data: Array(7).fill(referenceGoal),
+                        type: 'line',
+                        borderColor: '#facc15',
+                        borderDash: [6, 4],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        tension: 0,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: { color: '#9ca3af', font: { size: 12 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.parsed.y.toLocaleString()} steps`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#9ca3af',
+                            callback: v => v.toLocaleString()
+                        },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    }
+                }
+            }
+        });
+    }
+
+    // summary dashboard
+    // re-reads steps from firestore and recalculates totals from in-memory arrays
+
     async function updateSummary() {
         const stepRef = doc(db, 'users', uid, 'stepEntries', todayStr());
         const stepSnap = await getDoc(stepRef);
@@ -493,14 +730,12 @@
         document.getElementById('summary-step-pct').innerText = `${pct}%`;
         document.getElementById('step-progress-bar').style.width = `${pct}%`;
 
-        // sum up calories burned from all activity entries today
         const totalBurned = activityEntries.reduce((sum, e) => sum + (e.caloriesBurned || 0), 0);
         document.getElementById('summary-burned').innerText = totalBurned;
 
-        // sum up calories consumed from all meal entries today
         const totalConsumed = mealEntries.reduce((sum, e) => sum + (e.totalCalories || 0), 0);
 
-        // net = consumed minus burned, colour changes based on value
+        // net = consumed minus burned; green if negative (deficit), red if large surplus
         const net = totalConsumed - totalBurned;
         const netEl = document.getElementById('summary-net');
         netEl.innerText = net;

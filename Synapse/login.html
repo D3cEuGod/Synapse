@@ -12,13 +12,23 @@
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen">
 
+<!-- ================= LOADING VIEW ================= -->
 <div id="view-loading" class="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
     <i data-lucide="activity" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mb-4"></i>
     <h2 class="text-xl font-bold text-gray-200">Loading Synapse...</h2>
 </div>
 
+<!-- ================= AUTHENTICATION VIEW ================= -->
 <div id="view-auth" class="hidden min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        
+        <!-- Back Arrow -->
+        <div class="mb-4 px-4 sm:px-0">
+            <a href="index.html" class="inline-flex items-center text-gray-400 hover:text-[#8ee4d2] transition-colors" title="Back to Home">
+                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+            </a>
+        </div>
+
         <div class="bg-gray-800 py-8 px-4 shadow-xl shadow-black/50 sm:rounded-xl sm:px-10 border border-gray-700">
 
             <form id="auth-form" class="space-y-5">
@@ -95,64 +105,64 @@
             </div>
         </div>
 
-            <div class="bg-gray-800 py-8 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700">
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
-                    
-                    <a href="profiles.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
-                        <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
-                            <i data-lucide="user" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Identity & Profile</h3>
-                        <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Foundation</p>
-                    </a>
+        <div class="bg-gray-800 py-8 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                
+                <a href="profiles.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
+                    <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
+                        <i data-lucide="user" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Identity & Profile</h3>
+                    <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Foundation</p>
+                </a>
 
-                    <a href="physical.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
-                        <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
-                            <i data-lucide="activity" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Physical Wellbeing</h3>
-                        <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Activity & Diet</p>
-                    </a>
+                <a href="physical.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
+                    <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
+                        <i data-lucide="activity" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Physical Wellbeing</h3>
+                    <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Activity & Diet</p>
+                </a>
 
-                    <a href="mental.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
-                        <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
-                            <i data-lucide="heart" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Mental Health</h3>
-                        <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Assessments</p>
-                    </a>
+                <a href="mental.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
+                    <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
+                        <i data-lucide="heart" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Mental Health</h3>
+                    <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Assessments</p>
+                </a>
 
-                    <a href="peerSupport.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
-                        <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
-                            <i data-lucide="users" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Peer Support</h3>
-                        <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Bookings</p>
-                    </a>
+                <a href="peerSupport.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
+                    <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
+                        <i data-lucide="users" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Peer Support</h3>
+                    <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Bookings</p>
+                </a>
 
-                    <a href="rewards.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
-                        <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
-                            <i data-lucide="award" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Rewards</h3>
-                        <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Gamification</p>
-                    </a>
+                <a href="rewards.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
+                    <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
+                        <i data-lucide="award" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Rewards</h3>
+                    <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Gamification</p>
+                </a>
 
-                    <a href="resources.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
-                        <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
-                            <i data-lucide="book-open" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Resources</h3>
-                        <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Library & Alerts</p>
-                    </a>
+                <a href="resources.html" class="group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center">
+                    <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
+                        <i data-lucide="book-open" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Resources</h3>
+                    <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Library & Alerts</p>
+                </a>
 
-                    <a href="hrdashboard.html" id="analytics-module-link" class="hidden group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center md:col-start-2">
-                        <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
-                            <i data-lucide="bar-chart-2" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
-                        </div>
-                        <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Analytics</h3>
-                        <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">HR Dashboard</p>
-                    </a>
+                <a href="hrdashboard.html" id="analytics-module-link" class="hidden group aspect-square flex flex-col items-center justify-center p-4 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#177a64] hover:bg-gray-800 transition-all duration-200 text-center md:col-start-2">
+                    <div class="p-3 bg-gray-800 group-hover:bg-[#177a64]/20 rounded-full mb-3 transition-colors">
+                        <i data-lucide="bar-chart-2" class="text-[#5f9f87] group-hover:text-[#8ee4d2] transition-colors w-7 h-7"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-200 group-hover:text-white text-sm sm:text-base">Analytics</h3>
+                    <p class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">HR Dashboard</p>
+                </a>
 
             </div>
         </div>
@@ -161,23 +171,49 @@
 </div>
 
 <script type="module">
-    import { renderNotificationBell } from "./src/notification/notification-bell.js";
-    import { auth, db } from "./src/shared/firebase-config.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
+        getAuth,
         signInWithEmailAndPassword,
         createUserWithEmailAndPassword,
         onAuthStateChanged,
         signOut
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import {
+        getFirestore,
         doc,
         setDoc,
         getDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    let firebaseConfig = {
+        apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
+        authDomain: "synapse21.firebaseapp.com",
+        projectId: "synapse21",
+        storageBucket: "synapse21.firebasestorage.app",
+        messagingSenderId: "1026510421512",
+        appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd"
+    };
+
+    if (typeof __firebase_config !== 'undefined') {
+        firebaseConfig = JSON.parse(__firebase_config);
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
     window.db = db;
 
+    function renderNotificationBell(uid) {
+        const container = document.getElementById('notification-bell-container');
+        if(container) {
+            container.innerHTML = '<i data-lucide="bell" class="w-5 h-5 text-gray-400 hover:text-white transition-colors cursor-pointer"></i>';
+            lucide.createIcons();
+        }
+    }
+
     lucide.createIcons();
+    
     let isLoginMode = true;
 
     const authForm = document.getElementById('auth-form');

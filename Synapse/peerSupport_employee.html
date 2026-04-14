@@ -8,19 +8,36 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .hidden { display: none !important; }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            position: absolute;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        input[type="date"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
 
+    <!-- Loading View -->
     <div id="view-loading" class="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
         <i data-lucide="activity" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mb-4"></i>
         <h2 class="text-xl font-bold text-gray-200">Loading Synapse...</h2>
     </div>
 
+    <!-- Main App View -->
     <div id="view-app" class="hidden flex-col flex-grow w-full">
         <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-4 text-[#5f9f87]">
-                <a href="peerSupport.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
+                <a href="login.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
                     <i data-lucide="chevron-left" class="w-6 h-6"></i>
                 </a>
                 <div class="flex items-center space-x-2">
@@ -88,11 +105,14 @@
 
                             <div class="flex-1">
                                 <label for="date-input" class="block text-sm font-medium text-gray-300 mb-1">Filter by date</label>
-                                <input
-                                    id="date-input"
-                                    type="date"
-                                    class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                />
+                                <div class="relative">
+                                    <input
+                                        id="date-input"
+                                        type="date"
+                                        class="w-full px-3 py-2 pr-10 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                    />
+                                    <i data-lucide="calendar" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8ee4d2] pointer-events-none"></i>
+                                </div>
                             </div>
 
                             <div class="flex gap-3">
@@ -173,6 +193,19 @@
                 <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
                     <div class="flex items-center justify-between mb-4">
                         <div>
+                            <h3 class="text-lg font-semibold text-white">Upcoming sessions</h3>
+                            <p class="text-sm text-gray-400">Your confirmed upcoming wellbeing sessions.</p>
+                        </div>
+                    </div>
+
+                    <div id="upcoming-sessions-list" class="space-y-3"></div>
+                </div>
+            </section>
+
+            <section class="mt-6">
+                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
                             <h3 class="text-lg font-semibold text-white">My support requests</h3>
                             <p class="text-sm text-gray-400">Track requests you have submitted.</p>
                         </div>
@@ -196,8 +229,8 @@
     </div>
 
     <script type="module">
+        // Firebase Imports
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { notifyBookingRequestMade } from "./src/notification/booking-notifications.js";
         import {
             getAuth,
             onAuthStateChanged,
@@ -216,6 +249,7 @@
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
             authDomain: "synapse21.firebaseapp.com",
@@ -229,31 +263,63 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // State Variables
         let currentUser = null;
         let currentUserProfile = null;
         let availableSlots = [];
         let selectedSlot = null;
         let myRequests = [];
 
+        // DOM Elements
         const messageBox = document.getElementById("message-box");
         const slotsList = document.getElementById("slots-list");
         const slotsLoading = document.getElementById("slots-loading");
         const requestsLoading = document.getElementById("requests-loading");
         const myRequestsList = document.getElementById("my-requests-list");
+        const upcomingSessionsList = document.getElementById("upcoming-sessions-list");
         const searchInput = document.getElementById("search-input");
         const dateInput = document.getElementById("date-input");
         const selectedSlotDisplay = document.getElementById("selected-slot-display");
 
+        // Inline Notification Functions (Replaces the broken local import)
+        async function notifyBookingRequestMade(data) {
+            try {
+                await addDoc(collection(db, "notifications"), {
+                    type: "BOOKING_REQUEST",
+                    recipientId: data.ambassadorId, // Notify the ambassador
+                    title: "New Booking Request",
+                    message: `${data.employeeName} has requested a session on ${data.date} at ${data.startTime}.`,
+                    createdAt: serverTimestamp(),
+                    read: false,
+                    data: data
+                });
+            } catch (error) {
+                console.error("Failed to send booking notification:", error);
+            }
+        }
+
+        async function notifyBookingCancelledByEmployee(data) {
+            try {
+                await addDoc(collection(db, "notifications"), {
+                    type: "BOOKING_CANCELLED",
+                    recipientId: data.ambassadorId, // Notify the ambassador
+                    title: "Booking Cancelled",
+                    message: `${data.employeeName} has cancelled their session request for ${data.date} at ${data.startTime}.`,
+                    createdAt: serverTimestamp(),
+                    read: false,
+                    data: data
+                });
+            } catch (error) {
+                console.error("Failed to send cancellation notification:", error);
+            }
+        }
+
+        // Utility Functions
         function showMessage(message, type = "success") {
             messageBox.textContent = message;
             messageBox.classList.remove(
-                "hidden",
-                "bg-red-900/30",
-                "border-red-800/50",
-                "text-red-300",
-                "bg-green-900/30",
-                "border-green-800/50",
-                "text-green-300"
+                "hidden", "bg-red-900/30", "border-red-800/50", "text-red-300",
+                "bg-green-900/30", "border-green-800/50", "text-green-300"
             );
 
             if (type === "error") {
@@ -269,47 +335,30 @@
         }
 
         function getDisplayName(profile, fallbackEmail) {
-            if (profile.firstName && profile.lastName) {
-                return `${profile.firstName} ${profile.lastName}`;
-            }
-            if (profile.firstName) {
-                return profile.firstName;
-            }
+            if (profile.firstName && profile.lastName) return `${profile.firstName} ${profile.lastName}`;
+            if (profile.firstName) return profile.firstName;
             return fallbackEmail;
         }
 
         function isEmployee(profile) {
-            if (profile.role && profile.role === "Employee") {
-                return true;
-            }
-
-            if (Array.isArray(profile.roles) && profile.roles.includes("Employee")) {
-                return true;
-            }
-
+            if (profile.role && profile.role === "Employee") return true;
+            if (Array.isArray(profile.roles) && profile.roles.includes("Employee")) return true;
             return false;
         }
 
         function formatDateDisplay(dateString) {
-            if (!dateString || !dateString.includes("-")) {
-                return dateString || "";
-            }
-
+            if (!dateString || !dateString.includes("-")) return dateString || "";
             const [year, month, day] = dateString.split("-");
             return `${day}/${month}/${year}`;
         }
 
         function getStatusClass(status) {
             switch (status) {
-                case "PENDING":
-                    return "text-yellow-300";
-                case "ACCEPTED":
-                    return "text-green-300";
+                case "PENDING": return "text-yellow-300";
+                case "ACCEPTED": return "text-green-300";
                 case "DECLINED":
-                case "CANCELLED":
-                    return "text-red-300";
-                default:
-                    return "text-gray-300";
+                case "CANCELLED": return "text-red-300";
+                default: return "text-gray-300";
             }
         }
 
@@ -322,25 +371,24 @@
         }
 
         function isFutureSlot(slot) {
-            if (!slot.date || !slot.endTime) {
-                return false;
-            }
-
+            if (!slot.date || !slot.endTime) return false;
             const slotEnd = new Date(`${slot.date}T${slot.endTime}:00`);
-            const now = new Date();
-
-            return slotEnd > now;
+            return slotEnd > new Date();
         }
 
         function hasSlotStarted(date, startTime) {
-            if (!date || !startTime) {
-                return false;
-            }
-
+            if (!date || !startTime) return false;
             const slotStart = new Date(`${date}T${startTime}:00`);
             return new Date() >= slotStart;
         }
 
+        function hasSlotEnded(date, endTime) {
+            if (!date || !endTime) return false;
+            const slotEnd = new Date(`${date}T${endTime}:00`);
+            return new Date() > slotEnd;
+        }
+
+        // Core App Logic
         function renderAvailableSlots() {
             const searchValue = searchInput.value.trim().toLowerCase();
             const selectedDate = dateInput.value;
@@ -359,7 +407,7 @@
             if (filteredSlots.length === 0) {
                 slotsList.innerHTML = `
                     <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
-                        No available slots found.
+                        No slots found.
                     </div>
                 `;
                 return;
@@ -378,13 +426,37 @@
                             <p class="text-sm text-gray-400">${formatDateDisplay(slot.date)}</p>
                             <p class="text-sm text-gray-400">${slot.startTime} - ${slot.endTime}</p>
                         </div>
-
-                        <button
-                            class="select-slot-btn px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium transition-colors"
-                            data-slot-id="${slot.id}"
-                        >
+                        <button class="select-slot-btn px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium transition-colors" data-slot-id="${slot.id}">
                             Select Slot
                         </button>
+                    </div>
+                </div>
+            `).join("");
+        }
+
+        function renderUpcomingSessions() {
+            const upcomingSessions = myRequests.filter(request =>
+                request.status === "ACCEPTED" && !hasSlotEnded(request.date, request.endTime)
+            );
+
+            if (upcomingSessions.length === 0) {
+                upcomingSessionsList.innerHTML = `
+                    <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
+                        No upcoming sessions.
+                    </div>
+                `;
+                return;
+            }
+
+            upcomingSessionsList.innerHTML = upcomingSessions.map(session => `
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        <div>
+                            <p class="font-semibold text-white">${session.ambassadorName}</p>
+                            <p class="text-sm text-gray-400 mt-1">${formatDateDisplay(session.date)}</p>
+                            <p class="text-sm text-gray-400">${session.startTime} - ${session.endTime}</p>
+                            <p class="text-xs mt-2 text-green-300">Confirmed</p>
+                        </div>
                     </div>
                 </div>
             `).join("");
@@ -396,7 +468,7 @@
             if (myRequests.length === 0) {
                 myRequestsList.innerHTML = `
                     <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
-                        You have not submitted any support requests yet.
+                        You have not submitted any requests yet.
                     </div>
                 `;
                 return;
@@ -412,6 +484,14 @@
                             <p class="text-sm text-gray-300 mt-2">${request.message || "No message provided."}</p>
                             <p class="text-xs mt-2 ${getStatusClass(request.status)}">Status: ${request.status}</p>
                         </div>
+
+                        <div class="flex items-center gap-2">
+                            ${request.status === "PENDING" ? `
+                                <button class="cancel-request-btn px-4 py-2 rounded-lg border border-red-700 text-red-300 hover:bg-red-900/30 text-sm transition-colors" data-request-id="${request.id}">
+                                    Cancel Request
+                                </button>
+                            ` : ""}
+                        </div>
                     </div>
                 </div>
             `).join("");
@@ -420,7 +500,6 @@
         function setSelectedSlot(slotId) {
             const slot = availableSlots.find(item => item.id === slotId);
             if (!slot) return;
-
             selectedSlot = slot;
             selectedSlotDisplay.value = `${slot.ambassadorName} • ${formatDateDisplay(slot.date)} • ${slot.startTime} - ${slot.endTime}`;
         }
@@ -428,11 +507,7 @@
         async function getCurrentUserProfile(uid) {
             const userRef = doc(db, "users", uid);
             const userSnap = await getDoc(userRef);
-
-            if (!userSnap.exists()) {
-                throw new Error("No user profile found.");
-            }
-
+            if (!userSnap.exists()) throw new Error("No user profile found.");
             return userSnap.data();
         }
 
@@ -448,16 +523,10 @@
 
                 for (const requestDoc of snapshot.docs) {
                     const data = requestDoc.data();
-
                     if (hasSlotStarted(data.date, data.startTime)) {
-                        await updateDoc(doc(db, "supportRequests", requestDoc.id), {
-                            status: "DECLINED"
-                        });
-
+                        await updateDoc(doc(db, "supportRequests", requestDoc.id), { status: "DECLINED" });
                         if (data.slotId) {
-                            await updateDoc(doc(db, "availabilitySlots", data.slotId), {
-                                status: "DECLINED"
-                            });
+                            await updateDoc(doc(db, "availabilitySlots", data.slotId), { status: "DECLINED" });
                         }
                     }
                 }
@@ -471,11 +540,7 @@
             slotsList.innerHTML = "";
 
             try {
-                const slotsQuery = query(
-                    collection(db, "availabilitySlots"),
-                    where("status", "==", "AVAILABLE")
-                );
-
+                const slotsQuery = query(collection(db, "availabilitySlots"), where("status", "==", "AVAILABLE"));
                 const snapshot = await getDocs(slotsQuery);
                 const slots = [];
 
@@ -490,16 +555,10 @@
                         endTime: data.endTime || "",
                         status: data.status || "AVAILABLE"
                     };
-
-                    if (isFutureSlot(slot)) {
-                        slots.push(slot);
-                    }
+                    if (isFutureSlot(slot)) slots.push(slot);
                 });
 
-                slots.sort((a, b) => {
-                    return `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`);
-                });
-
+                slots.sort((a, b) => `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`));
                 availableSlots = slots;
                 renderAvailableSlots();
             } catch (error) {
@@ -515,11 +574,7 @@
             myRequestsList.innerHTML = "";
 
             try {
-                const requestsQuery = query(
-                    collection(db, "supportRequests"),
-                    where("employeeId", "==", currentUser.uid)
-                );
-
+                const requestsQuery = query(collection(db, "supportRequests"), where("employeeId", "==", currentUser.uid));
                 const snapshot = await getDocs(requestsQuery);
                 const requests = [];
 
@@ -527,6 +582,8 @@
                     const data = docSnap.data();
                     requests.push({
                         id: docSnap.id,
+                        slotId: data.slotId || "",
+                        ambassadorId: data.ambassadorId || "",
                         ambassadorName: data.ambassadorName || "Unknown Ambassador",
                         date: data.date || "",
                         startTime: data.startTime || "",
@@ -545,6 +602,7 @@
 
                 myRequests = requests;
                 renderMyRequests();
+                renderUpcomingSessions();
             } catch (error) {
                 console.error(error);
                 showMessage("Could not load your requests.", "error");
@@ -555,11 +613,7 @@
 
         async function submitSupportRequest(event) {
             event.preventDefault();
-
-            if (!selectedSlot) {
-                showMessage("Please select a slot first.", "error");
-                return;
-            }
+            if (!selectedSlot) return showMessage("Please select a slot first.", "error");
 
             const message = document.getElementById("request-message").value.trim();
 
@@ -579,9 +633,7 @@
                     createdAt: serverTimestamp()
                 });
 
-                await updateDoc(doc(db, "availabilitySlots", selectedSlot.id), {
-                    status: "PENDING"
-                });
+                await updateDoc(doc(db, "availabilitySlots", selectedSlot.id), { status: "PENDING" });
 
                 await notifyBookingRequestMade({
                   employeeId: currentUser.uid,
@@ -606,6 +658,36 @@
             }
         }
 
+        async function cancelPendingRequest(requestId) {
+            const request = myRequests.find(item => item.id === requestId);
+            if (!request) return showMessage("Request not found.", "error");
+            if (request.status !== "PENDING") return showMessage("Only pending requests can be cancelled.", "error");
+
+            try {
+                await updateDoc(doc(db, "supportRequests", requestId), { status: "CANCELLED" });
+                if (request.slotId) {
+                    await updateDoc(doc(db, "availabilitySlots", request.slotId), { status: "AVAILABLE" });
+                }
+
+                await notifyBookingCancelledByEmployee({
+                    employeeId: currentUser.uid,
+                    employeeName: getDisplayName(currentUserProfile, currentUser.email),
+                    ambassadorId: request.ambassadorId,
+                    ambassadorName: request.ambassadorName,
+                    date: request.date,
+                    startTime: request.startTime,
+                    endTime: request.endTime
+                });
+
+                showMessage("Request cancelled.");
+                await loadAvailableSlots();
+                await loadMyRequests();
+            } catch (error) {
+                console.error(error);
+                showMessage("Could not cancel request.", "error");
+            }
+        }
+
         function bindEvents() {
             document.getElementById("logout-btn").addEventListener("click", async () => {
                 await signOut(auth);
@@ -618,10 +700,7 @@
                 renderAvailableSlots();
             });
 
-            document.getElementById("refresh-slots-btn").addEventListener("click", async () => {
-                await loadAvailableSlots();
-            });
-
+            document.getElementById("refresh-slots-btn").addEventListener("click", loadAvailableSlots);
             document.getElementById("refresh-requests-btn").addEventListener("click", async () => {
                 await expireOutdatedPendingRequests();
                 await loadMyRequests();
@@ -632,18 +711,26 @@
 
             document.getElementById("request-form").addEventListener("submit", submitSupportRequest);
 
-            document.addEventListener("click", (event) => {
-                const button = event.target.closest(".select-slot-btn");
-                if (!button) return;
-                setSelectedSlot(button.dataset.slotId);
+            document.addEventListener("click", async (event) => {
+                const selectButton = event.target.closest(".select-slot-btn");
+                if (selectButton) {
+                    setSelectedSlot(selectButton.dataset.slotId);
+                    return;
+                }
+
+                const cancelRequestButton = event.target.closest(".cancel-request-btn");
+                if (cancelRequestButton) {
+                    await cancelPendingRequest(cancelRequestButton.dataset.requestId);
+                }
             });
         }
 
         lucide.createIcons();
 
+        // Auth Observer
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                window.location.href = "login.html";
+                window.location.href = "login.html"; // Redirects user to login if not authenticated
                 return;
             }
 
@@ -670,11 +757,9 @@
             } catch (error) {
                 console.error(error);
                 document.getElementById("view-loading").classList.add("hidden");
-
                 const appView = document.getElementById("view-app");
                 appView.classList.remove("hidden");
                 appView.classList.add("flex");
-
                 showMessage("Could not load employee peer support page.", "error");
             }
         });
