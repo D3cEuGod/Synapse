@@ -8,80 +8,466 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .hidden { display: none !important; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
 
-    <div id="view-loading" class="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
-        <i data-lucide="activity" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mb-4"></i>
-        <h2 class="text-xl font-bold text-gray-200">Loading Synapse...</h2>
-    </div>
+<!-- Loading View -->
+<div id="view-loading" class="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
+    <i data-lucide="user" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mb-4"></i>
+    <h2 class="text-xl font-bold text-gray-200">Loading Profile...</h2>
+</div>
 
-    <div id="view-app" class="hidden flex-col flex-grow w-full">
-        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-4 text-[#5f9f87]">
-                <a href="login.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
-                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
-                </a>
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="activity" class="stroke-[2.5] w-6 h-6"></i>
-                    <h1 class="text-xl font-bold tracking-tight hidden sm:block text-gray-100">Synapse Wellbeing</h1>
+<!-- Main Content View --
+<div id="view-main" class="hidden flex-1 flex-col">
+    
+    <!-- Top Navigation -->
+    <nav class="bg-gray-800 border-b border-gray-700 px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+        <div class="flex items-center space-x-4">
+            <button id="back-btn" class="text-gray-400 hover:text-[#8ee4d2] transition-colors flex items-center group">
+                <i data-lucide="arrow-left" class="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform"></i>
+                <span class="hidden sm:inline">Back to Hub</span>
+            </button>
+            <div class="h-6 w-px bg-gray-700 hidden sm:block"></div>
+            <div class="flex items-center space-x-2 text-[#5f9f87]">
+                <i data-lucide="user-circle" class="stroke-[2] w-6 h-6"></i>
+                <h1 class="text-lg font-bold text-white tracking-tight">Identity & Profile</h1>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+            <div class="text-xs text-gray-500 hidden md:block mr-2" id="auto-logout-warning">
+                Auto-logout in <span id="timer-display">15:00</span>
+            </div>
+            <button id="logout-btn" class="flex items-center space-x-2 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Logout</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Profile Content -->
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+        
+        <!-- Left Column: Identity & Roles -->
+        <div class="space-y-6">
+            <div class="bg-gray-800 shadow-xl shadow-black/50 rounded-xl border border-gray-700 overflow-hidden">
+                <div class="p-6 border-b border-gray-700 flex flex-col items-center text-center">
+                    <div class="w-24 h-24 bg-gray-900 border-2 border-[#177a64] rounded-full flex items-center justify-center mb-4 shadow-inner">
+                        <i data-lucide="user" class="w-12 h-12 text-[#5f9f87]"></i>
+                    </div>
+                    <h2 id="display-email" class="text-lg font-semibold text-white break-all">user@example.com</h2>
+                    <p class="text-sm text-gray-400 mt-1">Synapse ID: <span id="display-uid" class="font-mono text-xs text-gray-500">Retrieving...</span></p>
+                </div>
+                
+                <div class="p-6 bg-gray-800/50">
+                    <h3 class="text-sm font-medium text-gray-300 mb-3 flex items-center">
+                        <i data-lucide="shield-check" class="w-4 h-4 mr-2 text-[#5f9f87]"></i>
+                        Assigned Roles
+                    </h3>
+                    <div id="roles-container" class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300 animate-pulse">Loading...</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4 leading-relaxed">
+                        Roles define your access level within the Synapse platform. Contact HR to request role modifications.
+                    </p>
                 </div>
             </div>
-            <div class="flex items-center space-x-4">
-                <div class="text-sm text-gray-400 hidden md:block">
-                    Logged in as <span class="font-medium text-gray-100" id="nav-email"></span>
-                </div>
-                <button id="logout-btn" class="flex items-center space-x-1 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span>Logout</span>
-                </button>
+
+            <!-- Password Management Widget -->
+            <div class="bg-gray-800 shadow-xl shadow-black/50 rounded-xl border border-gray-700 p-6">
+                <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+                    <i data-lucide="key" class="w-5 h-5 mr-2 text-[#5f9f87]"></i>
+                    Security
+                </h3>
+                <form id="password-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">New Password</label>
+                        <input type="password" id="new-password" minlength="6" required class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">Confirm Password</label>
+                        <input type="password" id="confirm-password" minlength="6" required class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm" />
+                    </div>
+                    <button type="submit" id="pwd-submit-btn" class="w-full flex justify-center py-2 px-4 border border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-200 bg-gray-700 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-[#5f9f87] transition-colors">
+                        Update Password
+                    </button>
+                    <div id="pwd-message" class="hidden text-xs text-center p-2 rounded-lg"></div>
+                </form>
             </div>
-        </header>
+        </div>
 
-        <main id="app-main-content" class="max-w-5xl mx-auto p-6 w-full flex-grow">
-        </main>
-    </div>
+        <!-- Right Column: Profile Settings -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-gray-800 shadow-xl shadow-black/50 rounded-xl border border-gray-700 overflow-hidden flex flex-col h-full">
+                <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-white flex items-center">
+                        <i data-lucide="settings" class="w-5 h-5 mr-2 text-[#5f9f87]"></i>
+                        Physical Wellbeing Metrics
+                    </h2>
+                </div>
+                
+                <form id="profile-form" class="p-6 space-y-6 flex-1 flex flex-col">
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- Weight -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Weight (kg)</label>
+                            <div class="relative">
+                                <input type="number" id="weight" step="0.1" min="20" max="300" placeholder="e.g. 75.5" class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm pl-10" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="scale" class="h-4 w-4 text-gray-500"></i>
+                                </div>
+                            </div>
+                        </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+                        <!-- Height -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Height (cm)</label>
+                            <div class="relative">
+                                <input type="number" id="height" step="1" min="50" max="300" placeholder="e.g. 175" class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm pl-10" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="ruler" class="h-4 w-4 text-gray-500"></i>
+                                </div>
+                            </div>
+                        </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
-            authDomain: "synapse21.firebaseapp.com",
-            projectId: "synapse21",
-            storageBucket: "synapse21.firebasestorage.app",
-            messagingSenderId: "1026510421512",
-            appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd"
-        };
+                        <!-- Biological Sex -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Biological Sex</label>
+                            <select id="biological-sex" class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm">
+                                <option value="" disabled selected>Select an option</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                            </select>
+                        </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        window.db = db;
+                        <!-- DOB -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Date of Birth</label>
+                            <div class="relative">
+                                <input type="date" id="dob" class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm pl-10" style="color-scheme: dark;" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="calendar" class="h-4 w-4 text-gray-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- Fitness Goals -->
+                    <div class="flex-1 flex flex-col">
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Fitness & Wellbeing Goals</label>
+                        <p class="text-xs text-gray-500 mb-2">These details are kept strictly confidential and help customise your daily calorie targets and dashboard analytics.</p>
+                        <textarea id="fitness-goals" rows="4" placeholder="E.g., I want to improve cardiovascular health, lose 5kg, and manage stress better." class="flex-1 appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm resize-none"></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-4 border-t border-gray-700 flex justify-end space-x-3">
+                        <button type="button" id="reset-btn" class="py-2 px-4 border border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-300 bg-transparent hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-gray-500 transition-colors">
+                            Discard Changes
+                        </button>
+                        <button type="submit" id="save-profile-btn" class="py-2 px-6 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#177a64] hover:bg-[#0b4533] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-[#5f9f87] transition-colors flex items-center">
+                            <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                            Save Profile
+                        </button>
+                    </div>
+                    <div id="profile-message" class="hidden text-sm p-3 rounded-lg text-center mt-2"></div>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+        getAuth,
+        onAuthStateChanged,
+        signOut,
+        updatePassword
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+        getFirestore,
+        doc,
+        setDoc,
+        getDoc,
+        updateDoc,
+        collection,
+        query,
+        where,
+        getDocs
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    let firebaseConfig = {
+        apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
+        authDomain: "synapse21.firebaseapp.com",
+        projectId: "synapse21",
+        storageBucket: "synapse21.firebasestorage.app",
+        messagingSenderId: "1026510421512",
+        appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd"
+    };
+
+    if (typeof __firebase_config !== 'undefined') {
+        firebaseConfig = JSON.parse(__firebase_config);
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    lucide.createIcons();
+
+    const viewLoading = document.getElementById('view-loading');
+    const viewMain = document.getElementById('view-main');
+    const profileForm = document.getElementById('profile-form');
+    const passwordForm = document.getElementById('password-form');
+    const timerDisplay = document.getElementById('timer-display');
+    const displayEmail = document.getElementById('display-email');
+    const displayUid = document.getElementById('display-uid');
+    const rolesContainer = document.getElementById('roles-container');
+    const profileMessage = document.getElementById('profile-message');
+    const pwdMessage = document.getElementById('pwd-message');
+    
+    // Auto-logout Logic (15 Minutes)
+    const INACTIVITY_LIMIT_MS = 15 * 60 * 1000; 
+    let inactivityTimer;
+    let countdownInterval;
+    let timeRemaining = INACTIVITY_LIMIT_MS;
+
+    function formatTime(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function triggerLogout() {
+        signOut(auth).then(() => {
+            window.location.href = 'login.html'; 
+        });
+    }
+
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        clearInterval(countdownInterval);
+        
+        timeRemaining = INACTIVITY_LIMIT_MS;
+        timerDisplay.innerText = formatTime(timeRemaining);
+
+        inactivityTimer = setTimeout(triggerLogout, INACTIVITY_LIMIT_MS);
+        
+        countdownInterval = setInterval(() => {
+            timeRemaining -= 1000;
+            if(timeRemaining <= 0) {
+                clearInterval(countdownInterval);
+            } else {
+                timerDisplay.innerText = formatTime(timeRemaining);
+            }
+        }, 1000);
+    }
+
+    ['mousemove', 'keydown', 'scroll', 'click'].forEach(evt => {
+        window.addEventListener(evt, resetInactivityTimer);
+    });
+
+    function showMessage(element, text, isError = false) {
+        element.innerText = text;
+        element.classList.remove('hidden', 'bg-green-900/30', 'text-green-400', 'border-green-800', 'bg-red-900/30', 'text-red-400', 'border-red-800', 'border');
+        
+        if (isError) {
+            element.classList.add('bg-red-900/30', 'text-red-400', 'border', 'border-red-800');
+        } else {
+            element.classList.add('bg-green-900/30', 'text-green-400', 'border', 'border-green-800');
+        }
+        
+        setTimeout(() => element.classList.add('hidden'), 5000);
+    }
+
+    let currentUser = null;
+    let initialProfileData = {};
+
+    async function loadUserProfile(user) {
+        try {
+            // Default Synapse ID fallback to UID
+            displayUid.innerText = user.uid;
+
+            // 1. Fetch user data from 'users' collection
+            const userDocRef = doc(db, 'users', user.uid);
+            const docSnap = await getDoc(userDocRef);
+
+            rolesContainer.innerHTML = ''; 
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                initialProfileData = data;
+
+                if (data.weight) document.getElementById('weight').value = data.weight;
+                if (data.height) document.getElementById('height').value = data.height;
+                if (data.biologicalSex) document.getElementById('biological-sex').value = data.biologicalSex;
+                if (data.dob) document.getElementById('dob').value = data.dob;
+                if (data.fitnessGoals) document.getElementById('fitness-goals').value = data.fitnessGoals;
+
+                const roles = data.roles || ['Employee'];
+                roles.forEach(role => {
+                    let colorClass = 'bg-gray-700 text-gray-300 border-gray-600';
+                    if (role === 'Administrator') colorClass = 'bg-red-900/40 text-red-300 border-red-800';
+                    if (role === 'HR_Member') colorClass = 'bg-blue-900/40 text-blue-300 border-blue-800';
+                    if (role === 'Wellbeing_Ambassador') colorClass = 'bg-[#177a64]/40 text-[#8ee4d2] border-[#177a64]';
+                    
+                    const span = document.createElement('span');
+                    span.className = `inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border ${colorClass}`;
+                    span.innerText = role.replace('_', ' ');
+                    rolesContainer.appendChild(span);
+                });
+            } else {
+                rolesContainer.innerHTML = `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium border bg-gray-700 text-gray-300 border-gray-600">Employee</span>`;
+                await setDoc(userDocRef, {
+                    email: user.email,
+                    roles: ['Employee'],
+                    createdAt: new Date().toISOString()
+                });
+            }
+
+            // 2. Query supportRequests to retrieve the custom employeeId
+            // Wrapped in a try/catch so the UI still loads if this specific query fails
+            if (user.email) {
+                try {
+                    const requestsQuery = query(
+                        collection(db, 'supportRequests'), 
+                        where('employeeEmail', '==', user.email)
+                    );
+                    
+                    const querySnapshot = await getDocs(requestsQuery);
+                    if (!querySnapshot.empty) {
+                        const requestData = querySnapshot.docs[0].data();
+                        if (requestData.employeeId) {
+                            displayUid.innerText = requestData.employeeId;
+                        }
+                    }
+                } catch (requestErr) {
+                    console.error("Notice: Could not retrieve employeeId from supportRequests:", requestErr);
+                }
+            }
+
+        } catch (error) {
+            console.error("Error loading profile data:", error);
+            rolesContainer.innerHTML = `<span class="text-xs text-red-400">Failed to load roles.</span>`;
+        }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = 'login.html'; 
+            return;
+        }
+
+        try {
+            currentUser = user;
+            displayEmail.innerText = user.email;
+            
+            // Wait for data to load BEFORE transitioning the UI
+            await loadUserProfile(user);
+            
+            // Safely show UI exactly like the working peer support document
+            viewLoading.classList.add('hidden');
+            viewMain.classList.remove('hidden');
+            viewMain.classList.add('flex'); // Add flex dynamically to prevent Tailwind conflicts
+            
+            resetInactivityTimer();
+        } catch (error) {
+            console.error("Fatal error loading profile view:", error);
+            viewLoading.innerHTML = `<div class="text-red-400 p-4 border border-red-800 rounded-lg bg-red-900/30">Failed to initialise profile page. Please check console.</div>`;
+        }
+    });
+
+    profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('save-profile-btn');
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Saving...`;
         lucide.createIcons();
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('nav-email').innerText = user.email;
-                document.getElementById('view-loading').classList.add('hidden');
-                const appView = document.getElementById('view-app');
-                appView.classList.remove('hidden');
-                appView.classList.add('flex');
-                window.currentUser = user; 
-            } else {
-                window.location.href = 'login.html'; 
-            }
-        });
+        try {
+            const updatedData = {
+                weight: parseFloat(document.getElementById('weight').value) || null,
+                height: parseInt(document.getElementById('height').value) || null,
+                biologicalSex: document.getElementById('biological-sex').value || null,
+                dob: document.getElementById('dob').value || null,
+                fitnessGoals: document.getElementById('fitness-goals').value || '',
+                lastUpdated: new Date().toISOString()
+            };
 
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'login.html';
-            });
-        });
-    </script>
+            Object.keys(updatedData).forEach(key => updatedData[key] === null && delete updatedData[key]);
+
+            const userDocRef = doc(db, 'users', currentUser.uid);
+            await updateDoc(userDocRef, updatedData);
+            
+            initialProfileData = { ...initialProfileData, ...updatedData };
+            showMessage(profileMessage, "Profile updated successfully.");
+        } catch (error) {
+            console.error("Profile Update Error:", error);
+            showMessage(profileMessage, "Failed to update profile: " + error.message, true);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i data-lucide="save" class="w-4 h-4 mr-2"></i> Save Profile`;
+            lucide.createIcons();
+        }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => {
+        document.getElementById('weight').value = initialProfileData.weight || '';
+        document.getElementById('height').value = initialProfileData.height || '';
+        document.getElementById('biological-sex').value = initialProfileData.biologicalSex || '';
+        document.getElementById('dob').value = initialProfileData.dob || '';
+        document.getElementById('fitness-goals').value = initialProfileData.fitnessGoals || '';
+    });
+
+    passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const newPwd = document.getElementById('new-password').value;
+        const confirmPwd = document.getElementById('confirm-password').value;
+        const btn = document.getElementById('pwd-submit-btn');
+
+        if (newPwd !== confirmPwd) {
+            showMessage(pwdMessage, "Passwords do not match.", true);
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerText = "Updating...";
+
+        try {
+            await updatePassword(currentUser, newPwd);
+            showMessage(pwdMessage, "Password updated successfully.");
+            passwordForm.reset();
+        } catch (error) {
+            console.error("Password Update Error:", error);
+            if(error.code === 'auth/requires-recent-login') {
+                showMessage(pwdMessage, "Security check: Please log out and log back in to change your password.", true);
+            } else {
+                showMessage(pwdMessage, error.message.replace('Firebase: ', ''), true);
+            }
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Update Password";
+        }
+    });
+
+    document.getElementById('back-btn').addEventListener('click', () => {
+        window.location.href = 'login.html'; 
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        triggerLogout();
+    });
+
+</script>
 </body>
 </html>
