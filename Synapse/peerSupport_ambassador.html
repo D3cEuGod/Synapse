@@ -8,6 +8,23 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .hidden { display: none !important; }
+
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+            position: absolute;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        input[type="date"],
+        input[type="time"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
@@ -86,33 +103,42 @@
                     <form id="availability-form" class="space-y-4">
                         <div>
                             <label for="slot-date" class="block text-sm font-medium text-gray-300 mb-1">Date</label>
-                            <input
-                                id="slot-date"
-                                type="date"
-                                class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                required
-                            />
+                            <div class="relative">
+                                <input
+                                    id="slot-date"
+                                    type="date"
+                                    class="w-full px-3 py-2 pr-10 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                    required
+                                />
+                                <i data-lucide="calendar" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8ee4d2] pointer-events-none"></i>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label for="start-time" class="block text-sm font-medium text-gray-300 mb-1">Start time</label>
-                                <input
-                                    id="start-time"
-                                    type="time"
-                                    class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                    required
-                                />
+                                <div class="relative">
+                                    <input
+                                        id="start-time"
+                                        type="time"
+                                        class="w-full px-3 py-2 pr-10 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                        required
+                                    />
+                                    <i data-lucide="clock-3" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8ee4d2] pointer-events-none"></i>
+                                </div>
                             </div>
 
                             <div>
                                 <label for="end-time" class="block text-sm font-medium text-gray-300 mb-1">End time</label>
-                                <input
-                                    id="end-time"
-                                    type="time"
-                                    class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                    required
-                                />
+                                <div class="relative">
+                                    <input
+                                        id="end-time"
+                                        type="time"
+                                        class="w-full px-3 py-2 pr-10 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                        required
+                                    />
+                                    <i data-lucide="clock-3" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8ee4d2] pointer-events-none"></i>
+                                </div>
                             </div>
                         </div>
 
@@ -129,11 +155,14 @@
                     <div class="flex flex-col md:flex-row md:items-end gap-4 mb-5">
                         <div class="flex-1">
                             <label for="filter-date" class="block text-sm font-medium text-gray-300 mb-1">Filter by date</label>
-                            <input
-                                id="filter-date"
-                                type="date"
-                                class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                            />
+                            <div class="relative">
+                                <input
+                                    id="filter-date"
+                                    type="date"
+                                    class="w-full px-3 py-2 pr-10 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
+                                />
+                                <i data-lucide="calendar" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8ee4d2] pointer-events-none"></i>
+                            </div>
                         </div>
 
                         <div class="flex gap-3">
@@ -412,6 +441,13 @@
                                     data-slot-id="${slot.id}"
                                 >
                                     Delete
+                                </button>
+                            ` : slot.status === "BOOKED" ? `
+                                <button
+                                    class="cancel-session-btn px-4 py-2 rounded-lg border border-yellow-700 text-yellow-300 hover:bg-yellow-900/20 text-sm transition-colors"
+                                    data-slot-id="${slot.id}"
+                                >
+                                    Cancel Session
                                 </button>
                             ` : `
                                 <button
@@ -834,6 +870,46 @@
             }
         }
 
+        async function cancelSession(slotId) {
+            clearMessage();
+
+            const slot = mySlots.find(item => item.id === slotId);
+
+            if (!slot) {
+                showMessage("Slot not found.", "error");
+                return;
+            }
+
+            if (slot.status !== "BOOKED") {
+                showMessage("Only booked sessions can be cancelled here.", "error");
+                return;
+            }
+
+            try {
+                const relatedRequest = myRequests.find(request =>
+                    request.slotId === slotId &&
+                    request.status === "ACCEPTED"
+                );
+
+                if (relatedRequest) {
+                    await updateDoc(doc(db, "supportRequests", relatedRequest.id), {
+                        status: "CANCELLED"
+                    });
+                }
+
+                await updateDoc(doc(db, "availabilitySlots", slotId), {
+                    status: "AVAILABLE"
+                });
+
+                showMessage("Session cancelled.");
+                await loadMyRequests();
+                await loadMySlots();
+            } catch (error) {
+                console.error(error);
+                showMessage("Could not cancel session.", "error");
+            }
+        }
+
         async function saveSessionNotes(requestId) {
             clearMessage();
 
@@ -852,9 +928,13 @@
                 });
 
                 showMessage("Session notes saved.");
+
+                // 🔥 CLOSE the notes panel after saving
+                expandedSessionId = null;
+
                 await loadMyRequests();
-                expandedSessionId = requestId;
                 renderSessionNotes();
+
             } catch (error) {
                 console.error(error);
                 showMessage("Could not save session notes.", "error");
@@ -897,6 +977,12 @@
                 const deleteButton = event.target.closest(".delete-slot-btn");
                 if (deleteButton) {
                     await deleteAvailabilitySlot(deleteButton.dataset.slotId);
+                    return;
+                }
+
+                const cancelSessionButton = event.target.closest(".cancel-session-btn");
+                if (cancelSessionButton) {
+                    await cancelSession(cancelSessionButton.dataset.slotId);
                     return;
                 }
 
