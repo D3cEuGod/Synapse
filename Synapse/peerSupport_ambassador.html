@@ -237,6 +237,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import {
+          notifySessionScheduled,
+          notifyBookingDeclined
+        } from "./src/notification/booking-notifications.js";
+        import {
             getAuth,
             onAuthStateChanged,
             signOut
@@ -831,6 +835,12 @@
         async function acceptRequest(requestId, slotId) {
             clearMessage();
 
+            const request = myRequests.find(item => item.id === requestId);
+            if (!request) {
+                showMessage("Request not found.", "error");
+                return;
+            }
+
             try {
                 await updateDoc(doc(db, "supportRequests", requestId), {
                     status: "ACCEPTED"
@@ -838,6 +848,15 @@
 
                 await updateDoc(doc(db, "availabilitySlots", slotId), {
                     status: "BOOKED"
+                });
+
+                await notifySessionScheduled({
+                    employeeId: request.employeeId,
+                    ambassadorId: currentUser.uid,
+                    ambassadorName: getDisplayName(currentUserProfile, currentUser.email),
+                    date: request.date,
+                    startTime: request.startTime,
+                    endTime: request.endTime
                 });
 
                 showMessage("Request accepted.");
@@ -859,6 +878,15 @@
 
                 await updateDoc(doc(db, "availabilitySlots", slotId), {
                     status: "AVAILABLE"
+                });
+
+                await notifyBookingDeclined({
+                    employeeId: request.employeeId,
+                    ambassadorId: currentUser.uid,
+                    ambassadorName: getDisplayName(currentUserProfile, currentUser.email),
+                    date: request.date,
+                    startTime: request.startTime,
+                    endTime: request.endTime
                 });
 
                 showMessage("Request declined.");
