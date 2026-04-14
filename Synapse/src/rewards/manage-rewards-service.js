@@ -182,7 +182,7 @@ async function processUpdate(id) {
     }
 }
 
-// --- EARNING RATES FUNCTIONS ---
+// EARNING RATES FUNCTIONS
 
 // Loads global earning rates from Firestore and populates the input fields
 async function loadEarningRates() {

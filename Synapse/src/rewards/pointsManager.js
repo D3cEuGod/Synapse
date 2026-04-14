@@ -17,12 +17,12 @@ class MealPointsStrategy {
     }
 }
 
-// Main PointsManager class - handles all point awarding for activities
+// Handles all point awarding for activities
 export class PointsManager {
     constructor() {
         this.activityStrategy = new ActivityPointsStrategy();
         this.mealStrategy = new MealPointsStrategy();
-        this.rates = null;  // Cache for rates
+        this.rates = null;  
     }
 
     // Loads earning rates from Firestore (steps rate, activity bonus, meal bonus, mood bonus)
@@ -35,7 +35,6 @@ export class PointsManager {
         if (snap.exists()) {
             this.rates = snap.data();
         } else {
-            // Default values if config doesn't exist
             this.rates = {
                 STEP_LOG_BASE: 100,
                 ACTIVITY_BONUS: 60,
