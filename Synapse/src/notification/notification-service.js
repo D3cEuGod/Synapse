@@ -1,3 +1,4 @@
+import { db } from "../shared/firebase-config.js";
 import {
   collection,
   addDoc,
@@ -11,7 +12,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 function getNotificationsCollection() {
-  return collection(window.db, "notifications");
+  return collection(db, "notifications");
 }
 
 export async function getNotificationsForUser(userId) {
@@ -76,11 +77,16 @@ export async function createNotification({
 }
 
 export async function markNotificationAsRead(notificationId) {
-  const notificationRef = doc(window.db, "notifications", notificationId);
-  await updateDoc(notificationRef, { isRead: true });
-}
+  try {
+    console.log("Trying to mark as read:", notificationId);
 
-export async function getUnreadNotificationCount(userId) {
-  const notifications = await getNotificationsForUser(userId);
-  return notifications.filter(notification => !notification.isRead).length;
+    const notificationRef = doc(window.db, "notifications", notificationId);
+    await updateDoc(notificationRef, { isRead: true });
+
+    console.log("Marked as read successfully:", notificationId);
+    return true;
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    throw error;
+  }
 }
