@@ -871,6 +871,12 @@
         async function declineRequest(requestId, slotId) {
             clearMessage();
 
+            const request = myRequests.find(item => item.id === requestId);
+            if (!request) {
+                showMessage("Request not found.", "error");
+                return;
+            }
+
             try {
                 await updateDoc(doc(db, "supportRequests", requestId), {
                     status: "DECLINED"

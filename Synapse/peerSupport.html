@@ -3,251 +3,28 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Synapse Wellbeing - Employee Peer Support</title>
+    <title>Synapse Peer Support</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        .hidden { display: none !important; }
-
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            opacity: 0;
-            position: absolute;
-            right: 0;
-            width: 100%;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        input[type="date"] {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-        }
-    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex items-center justify-center">
 
-    <div id="view-loading" class="min-h-screen flex flex-col justify-center items-center py-12 sm:px-6 lg:px-8">
-        <i data-lucide="activity" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mb-4"></i>
-        <h2 class="text-xl font-bold text-gray-200">Loading Synapse...</h2>
-    </div>
-
-    <div id="view-app" class="hidden flex-col flex-grow w-full">
-        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-4 text-[#5f9f87]">
-                <a href="login.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
-                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
-                </a>
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="users" class="stroke-[2.5] w-6 h-6"></i>
-                    <h1 class="text-xl font-bold tracking-tight hidden sm:block text-gray-100">Employee Peer Support</h1>
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-4">
-                <div class="text-sm text-gray-400 hidden md:block">
-                    Logged in as <span class="font-medium text-gray-100" id="nav-email"></span>
-                </div>
-                <button id="logout-btn" class="flex items-center space-x-1 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </header>
-
-        <main class="max-w-6xl mx-auto p-6 w-full flex-grow">
-            <section class="mb-6">
-                <div class="flex items-start gap-3">
-                    <div class="p-3 rounded-xl bg-[#177a64]/20 border border-[#177a64]/30">
-                        <i data-lucide="heart-handshake" class="w-6 h-6 text-[#8ee4d2]"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold text-white mb-1">Request a Wellbeing Session</h2>
-                        <p class="text-sm text-gray-400">
-                            Browse available ambassador slots and submit a support request.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <div id="message-box" class="hidden mb-6 rounded-lg border px-4 py-3 text-sm"></div>
-
-            <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
-                    <p class="text-sm text-gray-400">Available slots</p>
-                    <p id="available-slots-count" class="text-2xl font-bold text-white mt-1">0</p>
-                </div>
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
-                    <p class="text-sm text-gray-400">My requests</p>
-                    <p id="my-requests-count" class="text-2xl font-bold text-white mt-1">0</p>
-                </div>
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-4">
-                    <p class="text-sm text-gray-400">Pending requests</p>
-                    <p id="pending-requests-count" class="text-2xl font-bold text-white mt-1">0</p>
-                </div>
-            </section>
-
-            <section class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div class="xl:col-span-2">
-                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
-                        <div class="flex flex-col md:flex-row md:items-end gap-4 mb-5">
-                            <div class="flex-1">
-                                <label for="search-input" class="block text-sm font-medium text-gray-300 mb-1">Search ambassador</label>
-                                <input
-                                    id="search-input"
-                                    type="text"
-                                    placeholder="Search by ambassador name"
-                                    class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                />
-                            </div>
-
-                            <div class="flex-1">
-                                <label for="date-input" class="block text-sm font-medium text-gray-300 mb-1">Filter by date</label>
-                                <div class="relative">
-                                    <input
-                                        id="date-input"
-                                        type="date"
-                                        class="w-full px-3 py-2 pr-10 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                    />
-                                    <i data-lucide="calendar" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8ee4d2] pointer-events-none"></i>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-3">
-                                <button
-                                    id="clear-filters-btn"
-                                    type="button"
-                                    class="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors"
-                                >
-                                    Clear
-                                </button>
-                                <button
-                                    id="refresh-slots-btn"
-                                    type="button"
-                                    class="px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white transition-colors"
-                                >
-                                    Refresh
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 class="text-lg font-semibold text-white">Available ambassador slots</h3>
-                                <p class="text-sm text-gray-400">Select a slot to request support.</p>
-                            </div>
-                            <span id="results-count" class="text-sm text-gray-400">0 slots</span>
-                        </div>
-
-                        <div id="slots-loading" class="hidden text-sm text-gray-400 mb-4">
-                            Loading available slots...
-                        </div>
-
-                        <div id="slots-list" class="space-y-3"></div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-5 sticky top-6">
-                        <div class="flex items-center gap-2 mb-4">
-                            <i data-lucide="send" class="w-5 h-5 text-[#8ee4d2]"></i>
-                            <h3 class="text-lg font-semibold text-white">Submit request</h3>
-                        </div>
-
-                        <form id="request-form" class="space-y-4">
-                            <div>
-                                <label for="selected-slot-display" class="block text-sm font-medium text-gray-300 mb-1">Selected slot</label>
-                                <input
-                                    id="selected-slot-display"
-                                    type="text"
-                                    readonly
-                                    placeholder="Choose a slot first"
-                                    class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-gray-300"
-                                />
-                            </div>
-
-                            <div>
-                                <label for="request-message" class="block text-sm font-medium text-gray-300 mb-1">Support message</label>
-                                <textarea
-                                    id="request-message"
-                                    rows="5"
-                                    placeholder="Briefly explain what support you would like."
-                                    class="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87]"
-                                ></textarea>
-                            </div>
-
-                            <button
-                                type="submit"
-                                class="w-full py-2.5 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white font-medium transition-colors"
-                            >
-                                Submit Support Request
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <section class="mt-6">
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-white">Upcoming sessions</h3>
-                            <p class="text-sm text-gray-400">Your confirmed upcoming wellbeing sessions.</p>
-                        </div>
-                    </div>
-
-                    <div id="upcoming-sessions-list" class="space-y-3"></div>
-                </div>
-            </section>
-
-            <section class="mt-6">
-                <div class="bg-gray-800 border border-gray-700 rounded-xl p-5">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-white">My support requests</h3>
-                            <p class="text-sm text-gray-400">Track requests you have submitted.</p>
-                        </div>
-                        <button
-                            id="refresh-requests-btn"
-                            type="button"
-                            class="px-4 py-2 rounded-lg border border-gray-600 text-gray-300 hover:bg-gray-700 transition-colors text-sm"
-                        >
-                            Refresh Requests
-                        </button>
-                    </div>
-
-                    <div id="requests-loading" class="hidden text-sm text-gray-400 mb-4">
-                        Loading your requests...
-                    </div>
-
-                    <div id="my-requests-list" class="space-y-3"></div>
-                </div>
-            </section>
-        </main>
+    <div class="text-center">
+        <i data-lucide="activity" class="stroke-[2.5] w-12 h-12 text-[#5f9f87] animate-pulse mx-auto mb-4"></i>
+        <h1 class="text-2xl font-bold text-white mb-2">Loading Peer Support...</h1>
+        <p class="text-gray-400">Redirecting you to the correct page.</p>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import {
-          notifyBookingRequestMade,
-          notifyBookingCancelledByEmployee
-        } from "./src/notification/booking-notifications.js";
-        import {
             getAuth,
-            onAuthStateChanged,
-            signOut
+            onAuthStateChanged
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import {
             getFirestore,
             doc,
-            getDoc,
-            collection,
-            query,
-            where,
-            getDocs,
-            addDoc,
-            updateDoc,
-            serverTimestamp
+            getDoc
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -263,54 +40,16 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentUser = null;
-        let currentUserProfile = null;
-        let availableSlots = [];
-        let selectedSlot = null;
-        let myRequests = [];
-
-        const messageBox = document.getElementById("message-box");
-        const slotsList = document.getElementById("slots-list");
-        const slotsLoading = document.getElementById("slots-loading");
-        const requestsLoading = document.getElementById("requests-loading");
-        const myRequestsList = document.getElementById("my-requests-list");
-        const upcomingSessionsList = document.getElementById("upcoming-sessions-list");
-        const searchInput = document.getElementById("search-input");
-        const dateInput = document.getElementById("date-input");
-        const selectedSlotDisplay = document.getElementById("selected-slot-display");
-
-        function showMessage(message, type = "success") {
-            messageBox.textContent = message;
-            messageBox.classList.remove(
-                "hidden",
-                "bg-red-900/30",
-                "border-red-800/50",
-                "text-red-300",
-                "bg-green-900/30",
-                "border-green-800/50",
-                "text-green-300"
-            );
-
-            if (type === "error") {
-                messageBox.classList.add("bg-red-900/30", "border", "border-red-800/50", "text-red-300");
-            } else {
-                messageBox.classList.add("bg-green-900/30", "border", "border-green-800/50", "text-green-300");
+        function isAmbassador(profile) {
+            if (profile.role && profile.role === "Ambassador") {
+                return true;
             }
 
-            setTimeout(() => {
-                messageBox.classList.add("hidden");
-                messageBox.textContent = "";
-            }, 3000);
-        }
+            if (Array.isArray(profile.roles) && profile.roles.includes("Ambassador")) {
+                return true;
+            }
 
-        function getDisplayName(profile, fallbackEmail) {
-            if (profile.firstName && profile.lastName) {
-                return `${profile.firstName} ${profile.lastName}`;
-            }
-            if (profile.firstName) {
-                return profile.firstName;
-            }
-            return fallbackEmail;
+            return false;
         }
 
         function isEmployee(profile) {
@@ -325,189 +64,6 @@
             return false;
         }
 
-        function formatDateDisplay(dateString) {
-            if (!dateString || !dateString.includes("-")) {
-                return dateString || "";
-            }
-
-            const [year, month, day] = dateString.split("-");
-            return `${day}/${month}/${year}`;
-        }
-
-        function getStatusClass(status) {
-            switch (status) {
-                case "PENDING":
-                    return "text-yellow-300";
-                case "ACCEPTED":
-                    return "text-green-300";
-                case "DECLINED":
-                case "CANCELLED":
-                    return "text-red-300";
-                default:
-                    return "text-gray-300";
-            }
-        }
-
-        function updateStats(filteredSlots = null) {
-            const visibleSlots = filteredSlots || availableSlots;
-            document.getElementById("available-slots-count").textContent = visibleSlots.length;
-            document.getElementById("my-requests-count").textContent = myRequests.length;
-            document.getElementById("pending-requests-count").textContent =
-                myRequests.filter(request => request.status === "PENDING").length;
-        }
-
-        function isFutureSlot(slot) {
-            if (!slot.date || !slot.endTime) {
-                return false;
-            }
-
-            const slotEnd = new Date(`${slot.date}T${slot.endTime}:00`);
-            const now = new Date();
-
-            return slotEnd > now;
-        }
-
-        function hasSlotStarted(date, startTime) {
-            if (!date || !startTime) {
-                return false;
-            }
-
-            const slotStart = new Date(`${date}T${startTime}:00`);
-            return new Date() >= slotStart;
-        }
-
-        function hasSlotEnded(date, endTime) {
-            if (!date || !endTime) {
-                return false;
-            }
-
-            const slotEnd = new Date(`${date}T${endTime}:00`);
-            return new Date() > slotEnd;
-        }
-
-        function renderAvailableSlots() {
-            const searchValue = searchInput.value.trim().toLowerCase();
-            const selectedDate = dateInput.value;
-
-            const filteredSlots = availableSlots.filter(slot => {
-                const matchesName = (slot.ambassadorName || "").toLowerCase().includes(searchValue);
-                const matchesDate = !selectedDate || slot.date === selectedDate;
-                return matchesName && matchesDate;
-            });
-
-            document.getElementById("results-count").textContent =
-                `${filteredSlots.length} slot${filteredSlots.length === 1 ? "" : "s"}`;
-
-            updateStats(filteredSlots);
-
-            if (filteredSlots.length === 0) {
-                slotsList.innerHTML = `
-                    <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
-                        No slots found.
-                    </div>
-                `;
-                return;
-            }
-
-            slotsList.innerHTML = filteredSlots.map(slot => `
-                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                        <div>
-                            <div class="flex items-center gap-3 mb-2">
-                                <p class="font-semibold text-white">${slot.ambassadorName}</p>
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-900/30 text-green-300 border border-green-800/50">
-                                    AVAILABLE
-                                </span>
-                            </div>
-                            <p class="text-sm text-gray-400">${formatDateDisplay(slot.date)}</p>
-                            <p class="text-sm text-gray-400">${slot.startTime} - ${slot.endTime}</p>
-                        </div>
-
-                        <button
-                            class="select-slot-btn px-4 py-2 rounded-lg bg-[#177a64] hover:bg-[#0b4533] text-white text-sm font-medium transition-colors"
-                            data-slot-id="${slot.id}"
-                        >
-                            Select Slot
-                        </button>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        function renderUpcomingSessions() {
-            const upcomingSessions = myRequests.filter(request =>
-                request.status === "ACCEPTED" && !hasSlotEnded(request.date, request.endTime)
-            );
-
-            if (upcomingSessions.length === 0) {
-                upcomingSessionsList.innerHTML = `
-                    <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
-                        No upcoming sessions.
-                    </div>
-                `;
-                return;
-            }
-
-            upcomingSessionsList.innerHTML = upcomingSessions.map(session => `
-                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4">
-                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                        <div>
-                            <p class="font-semibold text-white">${session.ambassadorName}</p>
-                            <p class="text-sm text-gray-400 mt-1">${formatDateDisplay(session.date)}</p>
-                            <p class="text-sm text-gray-400">${session.startTime} - ${session.endTime}</p>
-                            <p class="text-xs mt-2 text-green-300">Confirmed</p>
-                        </div>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        function renderMyRequests() {
-            updateStats();
-
-            if (myRequests.length === 0) {
-                myRequestsList.innerHTML = `
-                    <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
-                        You have not submitted any requests yet.
-                    </div>
-                `;
-                return;
-            }
-
-            myRequestsList.innerHTML = myRequests.map(request => `
-                <div class="bg-gray-900 border border-gray-700 rounded-xl p-4">
-                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                        <div>
-                            <p class="font-semibold text-white">${request.ambassadorName}</p>
-                            <p class="text-sm text-gray-400 mt-1">${formatDateDisplay(request.date)}</p>
-                            <p class="text-sm text-gray-400">${request.startTime} - ${request.endTime}</p>
-                            <p class="text-sm text-gray-300 mt-2">${request.message || "No message provided."}</p>
-                            <p class="text-xs mt-2 ${getStatusClass(request.status)}">Status: ${request.status}</p>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            ${request.status === "PENDING" ? `
-                                <button
-                                    class="cancel-request-btn px-4 py-2 rounded-lg border border-red-700 text-red-300 hover:bg-red-900/30 text-sm transition-colors"
-                                    data-request-id="${request.id}"
-                                >
-                                    Cancel Request
-                                </button>
-                            ` : ""}
-                        </div>
-                    </div>
-                </div>
-            `).join("");
-        }
-
-        function setSelectedSlot(slotId) {
-            const slot = availableSlots.find(item => item.id === slotId);
-            if (!slot) return;
-
-            selectedSlot = slot;
-            selectedSlotDisplay.value = `${slot.ambassadorName} • ${formatDateDisplay(slot.date)} • ${slot.startTime} - ${slot.endTime}`;
-        }
-
         async function getCurrentUserProfile(uid) {
             const userRef = doc(db, "users", uid);
             const userSnap = await getDoc(userRef);
@@ -519,262 +75,6 @@
             return userSnap.data();
         }
 
-        async function expireOutdatedPendingRequests() {
-            try {
-                const pendingRequestsQuery = query(
-                    collection(db, "supportRequests"),
-                    where("employeeId", "==", currentUser.uid),
-                    where("status", "==", "PENDING")
-                );
-
-                const snapshot = await getDocs(pendingRequestsQuery);
-
-                for (const requestDoc of snapshot.docs) {
-                    const data = requestDoc.data();
-
-                    if (hasSlotStarted(data.date, data.startTime)) {
-                        await updateDoc(doc(db, "supportRequests", requestDoc.id), {
-                            status: "DECLINED"
-                        });
-
-                        if (data.slotId) {
-                            await updateDoc(doc(db, "availabilitySlots", data.slotId), {
-                                status: "DECLINED"
-                            });
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Error expiring outdated pending requests:", error);
-            }
-        }
-
-        async function loadAvailableSlots() {
-            slotsLoading.classList.remove("hidden");
-            slotsList.innerHTML = "";
-
-            try {
-                const slotsQuery = query(
-                    collection(db, "availabilitySlots"),
-                    where("status", "==", "AVAILABLE")
-                );
-
-                const snapshot = await getDocs(slotsQuery);
-                const slots = [];
-
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const slot = {
-                        id: docSnap.id,
-                        ambassadorId: data.ambassadorId || "",
-                        ambassadorName: data.ambassadorName || "Unknown Ambassador",
-                        date: data.date || "",
-                        startTime: data.startTime || "",
-                        endTime: data.endTime || "",
-                        status: data.status || "AVAILABLE"
-                    };
-
-                    if (isFutureSlot(slot)) {
-                        slots.push(slot);
-                    }
-                });
-
-                slots.sort((a, b) => {
-                    return `${a.date} ${a.startTime}`.localeCompare(`${b.date} ${b.startTime}`);
-                });
-
-                availableSlots = slots;
-                renderAvailableSlots();
-            } catch (error) {
-                console.error(error);
-                showMessage("Could not load available slots.", "error");
-            } finally {
-                slotsLoading.classList.add("hidden");
-            }
-        }
-
-        async function loadMyRequests() {
-            requestsLoading.classList.remove("hidden");
-            myRequestsList.innerHTML = "";
-
-            try {
-                const requestsQuery = query(
-                    collection(db, "supportRequests"),
-                    where("employeeId", "==", currentUser.uid)
-                );
-
-                const snapshot = await getDocs(requestsQuery);
-                const requests = [];
-
-                snapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    requests.push({
-                        id: docSnap.id,
-                        slotId: data.slotId || "",
-                        ambassadorId: data.ambassadorId || "",
-                        ambassadorName: data.ambassadorName || "Unknown Ambassador",
-                        date: data.date || "",
-                        startTime: data.startTime || "",
-                        endTime: data.endTime || "",
-                        message: data.message || "",
-                        status: data.status || "PENDING",
-                        createdAt: data.createdAt || null
-                    });
-                });
-
-                requests.sort((a, b) => {
-                    const aTime = a.createdAt?.seconds || 0;
-                    const bTime = b.createdAt?.seconds || 0;
-                    return bTime - aTime;
-                });
-
-                myRequests = requests;
-                renderMyRequests();
-                renderUpcomingSessions();
-            } catch (error) {
-                console.error(error);
-                showMessage("Could not load your requests.", "error");
-            } finally {
-                requestsLoading.classList.add("hidden");
-            }
-        }
-
-        async function submitSupportRequest(event) {
-            event.preventDefault();
-
-            if (!selectedSlot) {
-                showMessage("Please select a slot first.", "error");
-                return;
-            }
-
-            const message = document.getElementById("request-message").value.trim();
-
-            try {
-                await addDoc(collection(db, "supportRequests"), {
-                    employeeId: currentUser.uid,
-                    employeeEmail: currentUser.email,
-                    employeeName: getDisplayName(currentUserProfile, currentUser.email),
-                    ambassadorId: selectedSlot.ambassadorId,
-                    ambassadorName: selectedSlot.ambassadorName,
-                    slotId: selectedSlot.id,
-                    date: selectedSlot.date,
-                    startTime: selectedSlot.startTime,
-                    endTime: selectedSlot.endTime,
-                    message: message,
-                    status: "PENDING",
-                    createdAt: serverTimestamp()
-                });
-
-                await updateDoc(doc(db, "availabilitySlots", selectedSlot.id), {
-                    status: "PENDING"
-                });
-
-                await notifyBookingRequestMade({
-                  employeeId: currentUser.uid,
-                  employeeName: getDisplayName(currentUserProfile, currentUser.email),
-                  ambassadorId: selectedSlot.ambassadorId,
-                  ambassadorName: selectedSlot.ambassadorName,
-                  date: selectedSlot.date,
-                  startTime: selectedSlot.startTime,
-                  endTime: selectedSlot.endTime
-                });
-
-                document.getElementById("request-form").reset();
-                selectedSlot = null;
-                selectedSlotDisplay.value = "";
-
-                showMessage("Support request submitted successfully.");
-                await loadAvailableSlots();
-                await loadMyRequests();
-            } catch (error) {
-                console.error(error);
-                showMessage("Could not submit support request.", "error");
-            }
-        }
-
-        async function cancelPendingRequest(requestId) {
-            const request = myRequests.find(item => item.id === requestId);
-
-            if (!request) {
-                showMessage("Request not found.", "error");
-                return;
-            }
-
-            if (request.status !== "PENDING") {
-                showMessage("Only pending requests can be cancelled.", "error");
-                return;
-            }
-
-            try {
-                await updateDoc(doc(db, "supportRequests", requestId), {
-                    status: "CANCELLED"
-                });
-
-                if (request.slotId) {
-                    await updateDoc(doc(db, "availabilitySlots", request.slotId), {
-                        status: "AVAILABLE"
-                    });
-                }
-
-                await notifyBookingCancelledByEmployee({
-                    employeeId: currentUser.uid,
-                    employeeName: getDisplayName(currentUserProfile, currentUser.email),
-                    ambassadorId: request.ambassadorId,
-                    ambassadorName: request.ambassadorName,
-                    date: request.date,
-                    startTime: request.startTime,
-                    endTime: request.endTime
-                });
-
-                showMessage("Request cancelled.");
-                await loadAvailableSlots();
-                await loadMyRequests();
-            } catch (error) {
-                console.error(error);
-                showMessage("Could not cancel request.", "error");
-            }
-        }
-
-        function bindEvents() {
-            document.getElementById("logout-btn").addEventListener("click", async () => {
-                await signOut(auth);
-                window.location.href = "login.html";
-            });
-
-            document.getElementById("clear-filters-btn").addEventListener("click", () => {
-                searchInput.value = "";
-                dateInput.value = "";
-                renderAvailableSlots();
-            });
-
-            document.getElementById("refresh-slots-btn").addEventListener("click", async () => {
-                await loadAvailableSlots();
-            });
-
-            document.getElementById("refresh-requests-btn").addEventListener("click", async () => {
-                await expireOutdatedPendingRequests();
-                await loadMyRequests();
-            });
-
-            searchInput.addEventListener("input", renderAvailableSlots);
-            dateInput.addEventListener("change", renderAvailableSlots);
-
-            document.getElementById("request-form").addEventListener("submit", submitSupportRequest);
-
-            document.addEventListener("click", async (event) => {
-                const selectButton = event.target.closest(".select-slot-btn");
-                if (selectButton) {
-                    setSelectedSlot(selectButton.dataset.slotId);
-                    return;
-                }
-
-                const cancelRequestButton = event.target.closest(".cancel-request-btn");
-                if (cancelRequestButton) {
-                    await cancelPendingRequest(cancelRequestButton.dataset.requestId);
-                }
-            });
-        }
-
         lucide.createIcons();
 
         onAuthStateChanged(auth, async (user) => {
@@ -784,34 +84,22 @@
             }
 
             try {
-                currentUser = user;
-                currentUserProfile = await getCurrentUserProfile(user.uid);
+                const currentUserProfile = await getCurrentUserProfile(user.uid);
 
-                if (!isEmployee(currentUserProfile)) {
-                    window.location.href = "peerSupport.html";
+                if (isAmbassador(currentUserProfile)) {
+                    window.location.href = "peerSupport_ambassador.html";
                     return;
                 }
 
-                document.getElementById("nav-email").innerText = user.email;
-                document.getElementById("view-loading").classList.add("hidden");
+                if (isEmployee(currentUserProfile)) {
+                    window.location.href = "peerSupport_employee.html";
+                    return;
+                }
 
-                const appView = document.getElementById("view-app");
-                appView.classList.remove("hidden");
-                appView.classList.add("flex");
-
-                bindEvents();
-                await expireOutdatedPendingRequests();
-                await loadAvailableSlots();
-                await loadMyRequests();
+                window.location.href = "login.html";
             } catch (error) {
                 console.error(error);
-                document.getElementById("view-loading").classList.add("hidden");
-
-                const appView = document.getElementById("view-app");
-                appView.classList.remove("hidden");
-                appView.classList.add("flex");
-
-                showMessage("Could not load employee peer support page.", "error");
+                window.location.href = "login.html";
             }
         });
     </script>
