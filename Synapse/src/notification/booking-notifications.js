@@ -72,3 +72,52 @@ export async function notifyBookingDeclined({
     })
   ]);
 }
+
+export async function notifyBookingCancelledByEmployee({
+  employeeId,
+  employeeName,
+  ambassadorId,
+  ambassadorName,
+  date,
+  startTime,
+  endTime
+}) {
+  await Promise.all([
+    createNotification({
+      userId: employeeId,
+      title: "Request Cancelled",
+      message: `You cancelled your support request with ${ambassadorName} on ${date} from ${startTime} to ${endTime}.`,
+      type: "BOOKING_CANCELLED_BY_EMPLOYEE"
+    }),
+    createNotification({
+      userId: ambassadorId,
+      title: "Request Cancelled by Employee",
+      message: `${employeeName} cancelled their support request on ${date} from ${startTime} to ${endTime}.`,
+      type: "BOOKING_CANCELLED_BY_EMPLOYEE"
+    })
+  ]);
+}
+
+export async function notifyBookingCancelledByAmbassador({
+  employeeId,
+  ambassadorId,
+  ambassadorName,
+  date,
+  startTime,
+  endTime
+}) {
+  await Promise.all([
+    createNotification({
+      userId: employeeId,
+      title: "Session Cancelled by Ambassador",
+      message: `Your support session with ${ambassadorName} on ${date} from ${startTime} to ${endTime} was cancelled.`,
+      type: "BOOKING_CANCELLED_BY_AMBASSADOR"
+    }),
+    createNotification({
+      userId: ambassadorId,
+      title: "Session Cancelled",
+      message: `You cancelled the support session on ${date} from ${startTime} to ${endTime}.`,
+      type: "BOOKING_CANCELLED_BY_AMBASSADOR"
+    })
+  ]);
+}

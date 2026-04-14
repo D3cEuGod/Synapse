@@ -228,7 +228,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { notifyBookingRequestMade } from "./src/notification/booking-notifications.js";
+        import {
+          notifyBookingRequestMade,
+          notifyBookingCancelledByEmployee
+        } from "./src/notification/booking-notifications.js";
         import {
             getAuth,
             onAuthStateChanged,
@@ -608,6 +611,7 @@
                     requests.push({
                         id: docSnap.id,
                         slotId: data.slotId || "",
+                        ambassadorId: data.ambassadorId || "",
                         ambassadorName: data.ambassadorName || "Unknown Ambassador",
                         date: data.date || "",
                         startTime: data.startTime || "",
@@ -711,6 +715,16 @@
                         status: "AVAILABLE"
                     });
                 }
+
+                await notifyBookingCancelledByEmployee({
+                    employeeId: currentUser.uid,
+                    employeeName: getDisplayName(currentUserProfile, currentUser.email),
+                    ambassadorId: request.ambassadorId,
+                    ambassadorName: request.ambassadorName,
+                    date: request.date,
+                    startTime: request.startTime,
+                    endTime: request.endTime
+                });
 
                 showMessage("Request cancelled.");
                 await loadAvailableSlots();
