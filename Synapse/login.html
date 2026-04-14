@@ -185,7 +185,7 @@
         setDoc,
         getDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    import { renderNotificationBell } from "./src/notification/notification-bell.js";
     let firebaseConfig = {
         apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
         authDomain: "synapse21.firebaseapp.com",
@@ -203,14 +203,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     window.db = db;
-
-    function renderNotificationBell(uid) {
-        const container = document.getElementById('notification-bell-container');
-        if(container) {
-            container.innerHTML = '<i data-lucide="bell" class="w-5 h-5 text-gray-400 hover:text-white transition-colors cursor-pointer"></i>';
-            lucide.createIcons();
-        }
-    }
 
     lucide.createIcons();
     
