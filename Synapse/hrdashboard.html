@@ -12,6 +12,7 @@
   <style>
     .hidden { display: none !important; }
   </style>
+  <!--Author: Aristidis Maximilian Karidis 230507748-->
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen">
 
@@ -112,33 +113,35 @@
               <p class="text-sm text-amber-400/80">Fewer than 5 self-assessment entries exist in this date range. Data is hidden to protect employee privacy. Please widen the date range or check back later.</p>
             </div>
           </div>
-          <div id="self-assessment-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div id="self-assessment-stats" class="hidden space-y-6">
 
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">Total Self-Assessments</h3>
-                <i data-lucide="clipboard-list" class="w-5 h-5 text-[#5f9f87]"></i>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-medium text-gray-400">Total Self-Assessments</h3>
+                  <i data-lucide="clipboard-list" class="w-5 h-5 text-[#5f9f87]"></i>
+                </div>
+                <p id="total-self-assessments" class="text-3xl font-bold text-white">-</p>
               </div>
-              <p id="total-self-assessments" class="text-3xl font-bold text-white">-</p>
+
+              <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-medium text-gray-400">Average Assessment Score</h3>
+                  <i data-lucide="sigma" class="w-5 h-5 text-[#5f9f87]"></i>
+                </div>
+                <p id="avg-self-score" class="text-3xl font-bold text-white">-</p>
+              </div>
             </div>
 
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">Average Assessment Score</h3>
-                <i data-lucide="sigma" class="w-5 h-5 text-[#5f9f87]"></i>
+            <div class="bg-gray-800 py-6 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700">
+              <div class="flex items-center space-x-2 mb-4">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#5f9f87]"></i>
+                <h2 class="text-lg font-semibold text-white">Risk level distribution</h2>
               </div>
-              <p id="avg-self-score" class="text-3xl font-bold text-white">-</p>
-            </div>
-
-            <!----
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">High Risk Count</h3>
-                <i data-lucide="triangle-alert" class="w-5 h-5 text-red-400"></i>
+              <div class="w-full max-w-2xl mx-auto">
+                <canvas id="self-assessment-chart"></canvas>
               </div>
-              <p id="high-risk-count" class="text-3xl font-bold text-white">-</p>
             </div>
-              -->
 
           </div>
         </div>
@@ -152,46 +155,50 @@
               <p class="text-sm text-amber-400/80">Fewer than 5 mood entries exist in this date range. Data is hidden to protect employee privacy. Please widen the date range or check back later.</p>
             </div>
           </div>
-          <div id="mood-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+          <div id="mood-stats" class="hidden space-y-6 mb-6">
 
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">Total Mood Entries</h3>
-                <i data-lucide="heart" class="w-5 h-5 text-[#5f9f87]"></i>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-medium text-gray-400">Total Mood Entries</h3>
+                  <i data-lucide="heart" class="w-5 h-5 text-[#5f9f87]"></i>
+                </div>
+                <p id="total-mood-entries" class="text-3xl font-bold text-white">-</p>
               </div>
-              <p id="total-mood-entries" class="text-3xl font-bold text-white">-</p>
+
+              <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-medium text-gray-400">Average Mood</h3>
+                  <i data-lucide="smile" class="w-5 h-5 text-[#5f9f87]"></i>
+                </div>
+                <p id="avg-mood" class="text-3xl font-bold text-white">-</p>
+              </div>
             </div>
 
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">Average Mood</h3>
-                <i data-lucide="smile" class="w-5 h-5 text-[#5f9f87]"></i>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-medium text-gray-400">Low Mood Entries (≤ 2)</h3>
+                  <i data-lucide="frown" class="w-5 h-5 text-amber-400"></i>
+                </div>
+                <p id="low-mood-count" class="text-3xl font-bold text-white">-</p>
               </div>
-              <p id="avg-mood" class="text-3xl font-bold text-white">-</p>
-            </div>
 
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">Low Mood Entries (≤ 2)</h3>
-                <i data-lucide="frown" class="w-5 h-5 text-amber-400"></i>
+              <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-medium text-gray-400">Neutral Mood Entries</h3>
+                  <i data-lucide="meh" class="w-5 h-5 text-blue-400"></i>
+                </div>
+                <p id="neutral-mood-count" class="text-3xl font-bold text-white">-</p>
               </div>
-              <p id="low-mood-count" class="text-3xl font-bold text-white">-</p>
-            </div>
 
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">Neutral Mood Entries</h3>
-                <i data-lucide="meh" class="w-5 h-5 text-blue-400"></i>
+              <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-medium text-gray-400">High Mood Entries (>= 4)</h3>
+                  <i data-lucide="smile" class="w-5 h-5 text-green-400"></i>
+                </div>
+                <p id="high-mood-count" class="text-3xl font-bold text-white">-</p>
               </div>
-              <p id="neutral-mood-count" class="text-3xl font-bold text-white">-</p>
-            </div>
-
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl shadow-black/50">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-sm font-medium text-gray-400">High Mood Entries (>= 4)</h3>
-                <i data-lucide="smile" class="w-5 h-5 text-green-400"></i>
-              </div>
-              <p id="high-mood-count" class="text-3xl font-bold text-white">-</p>
             </div>
 
           </div>
@@ -205,6 +212,52 @@
             <div class="w-full max-w-md mx-auto">
               <canvas id="mood-distribution-chart" class="w-full h-64"></canvas>
             </div>
+          </div>
+        </div>
+
+        <!-- Gamification Section -->
+        <div class="bg-gray-800 py-6 px-6 shadow-xl shadow-black/50 sm:rounded-xl border border-gray-700 mb-6">
+          <div class="flex items-center space-x-2 mb-4">
+            <i data-lucide="award" class="w-5 h-5 text-[#5f9f87]"></i>
+            <h2 class="text-lg font-semibold text-white">Gamification Analytics</h2>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-6">
+            <div class="bg-gray-900 p-6 rounded-xl border border-gray-700">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Total Points Earned</h3>
+                <i data-lucide="trending-up" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="total-points-earned" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-900 p-6 rounded-xl border border-gray-700">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Total Points Redeemed</h3>
+                <i data-lucide="gift" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="total-points-redeemed" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-900 p-6 rounded-xl border border-gray-700">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Average Points Balance</h3>
+                <i data-lucide="wallet" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="average-points-balance" class="text-3xl font-bold text-white">-</p>
+            </div>
+
+            <div class="bg-gray-900 p-6 rounded-xl border border-gray-700">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-medium text-gray-400">Redemption Rate</h3>
+                <i data-lucide="percent" class="w-5 h-5 text-[#5f9f87]"></i>
+              </div>
+              <p id="redemption-rate" class="text-3xl font-bold text-white">-</p>
+            </div>
+          </div>
+
+          <div class="w-full max-w-2xl mx-auto">
+            <canvas id="points-activity-chart" class="w-full h-64"></canvas>
           </div>
         </div>
 
@@ -256,8 +309,10 @@
       exportReportAsPDF
     } from "./src/hrdashboard/export-service.js";
 
+    let selfAssessmentChart = null;
     let moodChart = null;
     let currentReport = null;
+    let pointsChart = null;
     
     const firebaseConfig = {
       apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
@@ -291,6 +346,44 @@
   
       document.getElementById("end-date").value = today.toISOString().split("T")[0];
       document.getElementById("start-date").value = prior.toISOString().split("T")[0];
+    }
+
+    function renderSelfAssessmentChart(riskCounts) {
+      const ctx = document.getElementById("self-assessment-chart").getContext("2d");
+      if (selfAssessmentChart) {
+        selfAssessmentChart.destroy();
+      }
+
+      selfAssessmentChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Low", "Medium", "High", "Very High"],
+          datasets: [{
+            label: "Number of assessments",
+            data: [riskCounts.low, riskCounts.medium, riskCounts.high, riskCounts.veryHigh],
+            backgroundColor: ["#34d399", "#facc15", "#f97316", "#ef4444"],
+            borderColor: "#1f2937",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              ticks: { color: "#e5e7eb" },
+              grid: { color: "#374151" }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: "#e5e7eb", stepSize: 1 },
+              grid: { color: "#374151" }
+            }
+          }
+        }
+      });
     }
 
     function renderMoodDistributionChart(moodStats){
@@ -329,8 +422,58 @@
           }
         }
       });
+    }
 
+    function renderPointsActivityChart(pointsStats) {
+      const ctx = document.getElementById("points-activity-chart").getContext("2d");
 
+      if (pointsChart) {
+        pointsChart.destroy();
+      }
+
+      pointsChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Points Earned", "Points Redeemed"],
+          datasets: [{
+            label: "Points",
+            data: [
+              pointsStats.totalPointsEarned,
+              pointsStats.totalPointsRedeemed
+            ],
+            backgroundColor: [
+              "#34d399",
+              "#f59e0b"
+            ],
+            borderColor: "#1f2937",
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#e5e7eb"
+              },
+              grid: {
+                color: "#374151"
+              }
+            },
+            y: {
+              ticks: {
+                color: "#e5e7eb"
+              },
+              grid: {
+                color: "#374151"
+              }
+            }
+          }
+        }
+      });
     }
   
     const ANONYMITY_THRESHOLD = 5;
@@ -338,8 +481,17 @@
     async function loadReport() {
       const startDate = document.getElementById("start-date").value;
       const endDate = document.getElementById("end-date").value;
+      const reportError = document.getElementById("report-error");
+      reportError.classList.add("hidden");
 
-      const report = await getHRDashboard(db, startDate, endDate);
+      let report;
+      try {
+        report = await getHRDashboard(db, startDate, endDate);
+      } catch (err) {
+        reportError.textContent = "Failed to load report. Please check your connection and try again.";
+        reportError.classList.remove("hidden");
+        return;
+      }
 
       // Only expose sections that meet the anonymity threshold to exports
       currentReport = {
@@ -348,7 +500,8 @@
           : null,
         moodStats: report.moodStats.totalMoodEntries >= ANONYMITY_THRESHOLD
           ? report.moodStats
-          : null
+          : null,
+        pointsStats: report.pointsStats
       };
 
       const selfAssessmentNotice = document.getElementById("self-assessment-notice");
@@ -372,10 +525,7 @@
         document.getElementById("avg-self-score").innerText =
           report.selfAssessmentStats.averageScore;
 
-        /*
-        document.getElementById("high-risk-count").innerText =
-          report.selfAssessmentStats.highRiskCount;
-        */
+        renderSelfAssessmentChart(report.selfAssessmentStats.riskCounts);
       }
 
       // Mood threshold check
@@ -388,23 +538,29 @@
         moodStats.classList.remove("hidden");
         moodChartSection.classList.remove("hidden");
 
-        document.getElementById("total-mood-entries").innerText =
-          report.moodStats.totalMoodEntries;
+        document.getElementById("total-mood-entries").innerText = report.moodStats.totalMoodEntries;
 
-        document.getElementById("avg-mood").innerText =
-          report.moodStats.averageMood;
+        document.getElementById("avg-mood").innerText = report.moodStats.averageMood;
 
-        document.getElementById("low-mood-count").innerText =
-          report.moodStats.lowMoodCount;
+        document.getElementById("low-mood-count").innerText = report.moodStats.lowMoodCount;
 
-        document.getElementById("neutral-mood-count").innerText =
-          report.moodStats.neutralMoodCount;
+        document.getElementById("neutral-mood-count").innerText = report.moodStats.neutralMoodCount;
 
-        document.getElementById("high-mood-count").innerText =
-          report.moodStats.highMoodCount;
+        document.getElementById("high-mood-count").innerText = report.moodStats.highMoodCount;
 
         renderMoodDistributionChart(report.moodStats);
       }
+
+      document.getElementById("total-points-earned").innerText = report.pointsStats.totalPointsEarned;
+
+      document.getElementById("total-points-redeemed").innerText = report.pointsStats.totalPointsRedeemed;
+
+      document.getElementById("average-points-balance").innerText = report.pointsStats.averagePointsBalance;
+
+      const rate = report.pointsStats.redemptionRate;
+      document.getElementById("redemption-rate").innerText = rate !== null ? `${rate}%` : "N/A";
+
+      renderPointsActivityChart(report.pointsStats);
 
       // Only show export when at least one section has sufficient data
       const hasData = report.selfAssessmentStats.totalSelfAssessments >= ANONYMITY_THRESHOLD ||

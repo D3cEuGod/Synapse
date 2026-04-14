@@ -1,16 +1,24 @@
-
+//Author: Aristidis Maximilian Karidis 230507748
 
 export async function exportReportAsPDF(report) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
 
     const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
     const margin = 40;
     const contentWidth = pageWidth - margin * 2;
     let y = margin;
 
     const start = document.getElementById("start-date").value;
     const end = document.getElementById("end-date").value;
+
+    const checkPageBreak = (neededHeight) => {
+        if (y + neededHeight > pageHeight - margin) {
+            pdf.addPage();
+            y = margin;
+        }
+    };
 
     // Title
     pdf.setFontSize(18);
@@ -26,6 +34,7 @@ export async function exportReportAsPDF(report) {
 
     // Section header helper
     const sectionHeader = (label) => {
+        checkPageBreak(30);
         pdf.setFontSize(12);
         pdf.setTextColor(40, 40, 40);
         pdf.setFont(undefined, "bold");
@@ -39,6 +48,7 @@ export async function exportReportAsPDF(report) {
 
     // Stat row helper
     const statRow = (label, value) => {
+        checkPageBreak(18);
         pdf.setFontSize(10);
         pdf.setTextColor(80, 80, 80);
         pdf.text(label, margin, y);
@@ -51,15 +61,34 @@ export async function exportReportAsPDF(report) {
 
     // Self-assessment stats
     if (report.selfAssessmentStats) {
+        const selfAssessmentCanvas = document.getElementById("self-assessment-chart");
+        const selfAssessmentChartHeight = selfAssessmentCanvas ? (selfAssessmentCanvas.height / selfAssessmentCanvas.width) * contentWidth : 0;
+        // 30 = section header, 2*18 = two stat rows, 12 = gap, 20 = gap before chart
+        const selfAssessmentSectionHeight = 30 + (2 * 18) + 12 + 20 + selfAssessmentChartHeight;
+        checkPageBreak(selfAssessmentSectionHeight);
+
         sectionHeader("Self-Assessment Statistics");
         statRow("Total Self-Assessments", report.selfAssessmentStats.totalSelfAssessments);
         statRow("Average Assessment Score", report.selfAssessmentStats.averageScore);
-        //statRow("High Risk Count", report.selfAssessmentStats.highRiskCount);
         y += 12;
+
+        if (selfAssessmentCanvas) {
+            y += 8;
+            const canvasImage = await html2canvas(selfAssessmentCanvas, { backgroundColor: "#1f2937", scale: 2 });
+            const imgData = canvasImage.toDataURL("image/png");
+            pdf.addImage(imgData, "PNG", margin, y, contentWidth, selfAssessmentChartHeight);
+            y += selfAssessmentChartHeight + 20;
+        }
     }
 
     // Mood stats
     if (report.moodStats) {
+        const moodChartCanvas = document.getElementById("mood-distribution-chart");
+        const moodChartHeight = moodChartCanvas ? (moodChartCanvas.height / moodChartCanvas.width) * contentWidth : 0;
+        // 30 = section header, 5*18 = five stat rows, 20 = gap before chart
+        const moodSectionHeight = 30 + (5 * 18) + 20 + moodChartHeight;
+        checkPageBreak(moodSectionHeight);
+
         sectionHeader("Mood Statistics");
         statRow("Total Mood Entries", report.moodStats.totalMoodEntries);
         statRow("Average Mood Level", report.moodStats.averageMood);
@@ -69,12 +98,34 @@ export async function exportReportAsPDF(report) {
         y += 20;
 
         // Mood distribution chart
-        const chartCanvas = document.getElementById("mood-distribution-chart");
-        if (chartCanvas) {
-            const canvasImage = await html2canvas(chartCanvas, { backgroundColor: "#1f2937", scale: 2 });
+        if (moodChartCanvas) {
+            const canvasImage = await html2canvas(moodChartCanvas, { backgroundColor: "#1f2937", scale: 2 });
             const imgData = canvasImage.toDataURL("image/png");
-            const imgHeight = (canvasImage.height / canvasImage.width) * contentWidth;
-            pdf.addImage(imgData, "PNG", margin, y, contentWidth, imgHeight);
+            pdf.addImage(imgData, "PNG", margin, y, contentWidth, moodChartHeight);
+            y += moodChartHeight + 20;
+        }
+    }
+
+    // Gamification stats
+    if (report.pointsStats) {
+        const pointsCanvas = document.getElementById("points-activity-chart");
+        const pointsChartHeight = pointsCanvas ? (pointsCanvas.height / pointsCanvas.width) * contentWidth : 0;
+        // 30 = section header, 4*18 = four stat rows, 20 = gap before chart
+        const gamificationSectionHeight = 30 + (4 * 18) + 20 + pointsChartHeight;
+        checkPageBreak(gamificationSectionHeight);
+
+        sectionHeader("Gamification Statistics");
+        statRow("Total Points Earned", report.pointsStats.totalPointsEarned);
+        statRow("Total Points Redeemed", report.pointsStats.totalPointsRedeemed);
+        statRow("Average Points Balance", report.pointsStats.averagePointsBalance);
+        statRow("Redemption Rate", report.pointsStats.redemptionRate !== null ? `${report.pointsStats.redemptionRate}%` : "N/A");
+        y += 20;
+
+        // Points activity chart
+        if (pointsCanvas) {
+            const canvasImage = await html2canvas(pointsCanvas, { backgroundColor: "#1f2937", scale: 2 });
+            const imgData = canvasImage.toDataURL("image/png");
+            pdf.addImage(imgData, "PNG", margin, y, contentWidth, pointsChartHeight);
         }
     }
 
@@ -94,7 +145,10 @@ export function exportReportAsCSV(report){
         ...(report.selfAssessmentStats ? [
             ["Total Self-Assessments", report.selfAssessmentStats.totalSelfAssessments],
             ["Average Assessment Score", report.selfAssessmentStats.averageScore],
-            //["High Risk Count", report.selfAssessmentStats.highRiskCount],
+            ["Risk Level — Low", report.selfAssessmentStats.riskCounts.low],
+            ["Risk Level — Medium", report.selfAssessmentStats.riskCounts.medium],
+            ["Risk Level — High", report.selfAssessmentStats.riskCounts.high],
+            ["Risk Level — Very High", report.selfAssessmentStats.riskCounts.veryHigh],
         ] : [
             ["Self-Assessment Data", "Insufficient data — hidden to protect employee privacy"]
         ]),
@@ -107,7 +161,13 @@ export function exportReportAsCSV(report){
             ["High Mood Count", report.moodStats.highMoodCount]
         ] : [
             ["Mood Data", "Insufficient data — hidden to protect employee privacy"]
-        ])
+        ]),
+        [],
+        ["Gamification Statistics"],
+        ["Total Points Earned", report.pointsStats.totalPointsEarned],
+        ["Total Points Redeemed", report.pointsStats.totalPointsRedeemed],
+        ["Average Points Balance", report.pointsStats.averagePointsBalance],
+        ["Redemption Rate", report.pointsStats.redemptionRate !== null ? `${report.pointsStats.redemptionRate}%` : "N/A"]
     ];
 
     const csvContent = rows.map(row => row.join(",")).join("\n");
