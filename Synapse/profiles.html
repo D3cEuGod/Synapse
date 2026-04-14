@@ -22,7 +22,7 @@
     <h2 class="text-xl font-bold text-gray-200">Loading Profile...</h2>
 </div>
 
-<!-- Main Content View --
+<!-- Main Content View -->
 <div id="view-main" class="hidden flex-1 flex-col">
     
     <!-- Top Navigation -->
@@ -60,7 +60,8 @@
                     <div class="w-24 h-24 bg-gray-900 border-2 border-[#177a64] rounded-full flex items-center justify-center mb-4 shadow-inner">
                         <i data-lucide="user" class="w-12 h-12 text-[#5f9f87]"></i>
                     </div>
-                    <h2 id="display-email" class="text-lg font-semibold text-white break-all">user@example.com</h2>
+                    <h2 id="display-name" class="text-lg font-semibold text-white break-all">user@example.com</h2>
+                    <p id="display-email" class="text-sm text-gray-400 mt-1 hidden"></p>
                     <p class="text-sm text-gray-400 mt-1">Synapse ID: <span id="display-uid" class="font-mono text-xs text-gray-500">Retrieving...</span></p>
                 </div>
                 
@@ -107,13 +108,35 @@
                 <div class="p-6 border-b border-gray-700 flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-white flex items-center">
                         <i data-lucide="settings" class="w-5 h-5 mr-2 text-[#5f9f87]"></i>
-                        Physical Wellbeing Metrics
+                        Personal & Wellbeing Details
                     </h2>
                 </div>
                 
                 <form id="profile-form" class="p-6 space-y-6 flex-1 flex flex-col">
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- First Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">First Name</label>
+                            <div class="relative">
+                                <input type="text" id="first-name" placeholder="e.g. Jane" class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm pl-10" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="user" class="h-4 w-4 text-gray-500"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Last Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-1">Last Name</label>
+                            <div class="relative">
+                                <input type="text" id="last-name" placeholder="e.g. Doe" class="appearance-none block w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded-lg shadow-sm text-white focus:outline-none focus:ring-[#5f9f87] focus:border-[#5f9f87] sm:text-sm pl-10" />
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="user" class="h-4 w-4 text-gray-500"></i>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Weight -->
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-1">Weight (kg)</label>
@@ -228,6 +251,7 @@
     const profileForm = document.getElementById('profile-form');
     const passwordForm = document.getElementById('password-form');
     const timerDisplay = document.getElementById('timer-display');
+    const displayName = document.getElementById('display-name');
     const displayEmail = document.getElementById('display-email');
     const displayUid = document.getElementById('display-uid');
     const rolesContainer = document.getElementById('roles-container');
@@ -294,10 +318,8 @@
 
     async function loadUserProfile(user) {
         try {
-            // Default Synapse ID fallback to UID
             displayUid.innerText = user.uid;
 
-            // 1. Fetch user data from 'users' collection
             const userDocRef = doc(db, 'users', user.uid);
             const docSnap = await getDoc(userDocRef);
 
@@ -307,11 +329,22 @@
                 const data = docSnap.data();
                 initialProfileData = data;
 
+                if (data.firstName) document.getElementById('first-name').value = data.firstName;
+                if (data.lastName) document.getElementById('last-name').value = data.lastName;
                 if (data.weight) document.getElementById('weight').value = data.weight;
                 if (data.height) document.getElementById('height').value = data.height;
                 if (data.biologicalSex) document.getElementById('biological-sex').value = data.biologicalSex;
                 if (data.dob) document.getElementById('dob').value = data.dob;
                 if (data.fitnessGoals) document.getElementById('fitness-goals').value = data.fitnessGoals;
+
+                if (data.firstName || data.lastName) {
+                    displayName.innerText = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+                    displayEmail.innerText = user.email;
+                    displayEmail.classList.remove('hidden');
+                } else {
+                    displayName.innerText = user.email;
+                    displayEmail.classList.add('hidden');
+                }
 
                 const roles = data.roles || ['Employee'];
                 roles.forEach(role => {
@@ -332,10 +365,9 @@
                     roles: ['Employee'],
                     createdAt: new Date().toISOString()
                 });
+                displayName.innerText = user.email;
             }
 
-            // 2. Query supportRequests to retrieve the custom employeeId
-            // Wrapped in a try/catch so the UI still loads if this specific query fails
             if (user.email) {
                 try {
                     const requestsQuery = query(
@@ -369,15 +401,12 @@
 
         try {
             currentUser = user;
-            displayEmail.innerText = user.email;
             
-            // Wait for data to load BEFORE transitioning the UI
             await loadUserProfile(user);
             
-            // Safely show UI exactly like the working peer support document
             viewLoading.classList.add('hidden');
             viewMain.classList.remove('hidden');
-            viewMain.classList.add('flex'); // Add flex dynamically to prevent Tailwind conflicts
+            viewMain.classList.add('flex');
             
             resetInactivityTimer();
         } catch (error) {
@@ -394,7 +423,12 @@
         lucide.createIcons();
 
         try {
+            const firstNameInput = document.getElementById('first-name').value.trim();
+            const lastNameInput = document.getElementById('last-name').value.trim();
+
             const updatedData = {
+                firstName: firstNameInput || null,
+                lastName: lastNameInput || null,
                 weight: parseFloat(document.getElementById('weight').value) || null,
                 height: parseInt(document.getElementById('height').value) || null,
                 biologicalSex: document.getElementById('biological-sex').value || null,
@@ -409,6 +443,16 @@
             await updateDoc(userDocRef, updatedData);
             
             initialProfileData = { ...initialProfileData, ...updatedData };
+            
+            if (updatedData.firstName || updatedData.lastName) {
+                displayName.innerText = `${updatedData.firstName || ''} ${updatedData.lastName || ''}`.trim();
+                displayEmail.innerText = currentUser.email;
+                displayEmail.classList.remove('hidden');
+            } else {
+                displayName.innerText = currentUser.email;
+                displayEmail.classList.add('hidden');
+            }
+
             showMessage(profileMessage, "Profile updated successfully.");
         } catch (error) {
             console.error("Profile Update Error:", error);
@@ -421,6 +465,8 @@
     });
 
     document.getElementById('reset-btn').addEventListener('click', () => {
+        document.getElementById('first-name').value = initialProfileData.firstName || '';
+        document.getElementById('last-name').value = initialProfileData.lastName || '';
         document.getElementById('weight').value = initialProfileData.weight || '';
         document.getElementById('height').value = initialProfileData.height || '';
         document.getElementById('biological-sex').value = initialProfileData.biologicalSex || '';
