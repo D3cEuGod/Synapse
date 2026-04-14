@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Synapse Wellbeing - Profile</title>
+    <title>Synapse Wellbeing - Rewards</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script type="module" src="src/rewards/rewards-service.js"></script>
     <style>
         .hidden { display: none !important; }
     </style>
@@ -18,70 +19,66 @@
     </div>
 
     <div id="view-app" class="hidden flex-col flex-grow w-full">
-        <header class="bg-gray-800 shadow-sm border-b border-gray-700 px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-4 text-[#5f9f87]">
-                <a href="login.html" class="p-1 hover:bg-gray-700 rounded-md transition-colors">
-                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
-                </a>
-                <div class="flex items-center space-x-2">
-                    <i data-lucide="activity" class="stroke-[2.5] w-6 h-6"></i>
-                    <h1 class="text-xl font-bold tracking-tight hidden sm:block text-gray-100">Synapse Wellbeing</h1>
-                </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <div class="text-sm text-gray-400 hidden md:block">
-                    Logged in as <span class="font-medium text-gray-100" id="nav-email"></span>
-                </div>
-                <button id="logout-btn" class="flex items-center space-x-1 text-sm font-medium text-gray-400 hover:text-red-500 transition-colors">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                    <span>Logout</span>
-                </button>
-            </div>
-        </header>
+        
+        <header id="app-header"></header>
 
-        <main id="app-main-content" class="max-w-5xl mx-auto p-6 w-full flex-grow">
+        <main id="app-main-content" class="max-w-7xl mx-auto p-6 w-full flex-grow">
+            <div class="flex flex-col lg:flex-row gap-8 items-start">
+  
+                <div class="w-full lg:w-[78%] space-y-6">
+                    
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-3xl font-bold text-gray-100 tracking-tight">Your Rewards</h1>
+                        
+                        <div class="flex items-center gap-3">
+                            <a href="myRedemptions.html" class="flex items-center gap-2 text-sm font-semibold text-[#5f9f87] hover:text-emerald-400 transition-colors bg-gray-800/40 px-4 py-2 rounded-lg border border-gray-700 hover:border-[#5f9f87]">
+                                View My Redemptions <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </a>
+
+                            <a href="hr-manage-rewards.html" id="hr-manage-btn" class="hidden flex items-center gap-2 bg-amber-600/20 hover:bg-amber-600 border border-amber-600 text-amber-500 hover:text-white px-4 py-2 rounded-lg transition-all font-bold text-sm">
+                                <i data-lucide="settings" class="w-4 h-4"></i> Manage Rewards
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800/60 border border-gray-700 p-8 rounded-xl shadow-lg">
+                        <div class="flex flex-col">
+                            <span class="text-sm text-gray-400 uppercase tracking-widest font-bold">Current Balance</span>
+                            <div class="flex items-baseline gap-2 mt-1">
+                                <span id="current-balance-display" class="text-5xl font-bold text-[#5f9f87]">0 Points</span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-4 flex items-center gap-1">
+                                Lifetime Points: 0 <i data-lucide="star" class="w-3 h-3 text-[#5f9f87]"></i>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h2 class="text-xl font-semibold text-gray-200">Rewards Shop</h2>
+                        <div id="rewards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            </div>
+                    </div>
+                </div>
+
+                <aside class="w-full lg:w-[22%] bg-gray-800/40 border border-gray-700 rounded-xl p-5 h-fit lg:sticky lg:top-6">
+                    <h2 class="text-sm font-bold mb-6 text-gray-200 border-b border-gray-700 pb-2 uppercase tracking-tight">Redemption History</h2>
+                    <div id="history-timeline-container" class="relative border-l-2 border-gray-700 ml-3 space-y-8">
+                        </div>
+                </aside>
+
+            </div>
         </main>
     </div>
 
+    
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
-            authDomain: "synapse21.firebaseapp.com",
-            projectId: "synapse21",
-            storageBucket: "synapse21.firebasestorage.app",
-            messagingSenderId: "1026510421512",
-            appId: "1:1026510421512:web:551d0bf8af2d9e14085bbd"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        import { initAppShell } from "./src/app-shell.js";
+        import { db } from "./src/firebase-config.js";
+        
         window.db = db;
-
-        lucide.createIcons();
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.getElementById('nav-email').innerText = user.email;
-                document.getElementById('view-loading').classList.add('hidden');
-                const appView = document.getElementById('view-app');
-                appView.classList.remove('hidden');
-                appView.classList.add('flex');
-                window.currentUser = user; 
-            } else {
-                window.location.href = 'login.html'; 
-            }
-        });
-
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            signOut(auth).then(() => {
-                window.location.href = 'login.html';
-            });
-        });
+        
+        
+        initAppShell();
     </script>
 </body>
 </html>

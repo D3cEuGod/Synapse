@@ -261,6 +261,10 @@
         collection, query, where, getDocs, orderBy, deleteDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // [GAMIFICATION] Import the points manager to bridge physical activity with rewards
+    import { PointsManager } from "./src/rewards/PointsManager.js";
+    const pointsManager = new PointsManager();
+
     const firebaseConfig = {
         apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
         authDomain: "synapse21.firebaseapp.com",
@@ -366,6 +370,11 @@
             steps, goal, date: todayStr(),
             lastModified: new Date().toISOString(), userId: uid
         });
+
+        // [GAMIFICATION] Calculate and credit points based on daily steps
+        await pointsManager.awardPoints(uid, steps, "STEPS_LOG");
+
+
         showMsg('step-success', `Steps saved: ${steps.toLocaleString()} / ${goal.toLocaleString()}`);
         // refresh chart after saving so today's bar updates immediately
         await loadWeeklyStepsChart();
@@ -459,6 +468,9 @@
             date: todayStr(), loggedAt: new Date().toISOString(), userId: uid
         });
 
+        // [GAMIFICATION] Award fixed points for completing a workout session
+        await pointsManager.awardPoints(uid, 1, "ACTIVITY");
+
         showMsg('activity-success', `${activityType} logged — ${caloriesBurned} kcal burned.`);
         typeEl.value = ''; durationEl.value = ''; weightEl.value = '';
         document.getElementById('activity-calories-preview').classList.add('hidden');
@@ -536,6 +548,9 @@
             mealType, portion, totalCalories,
             date: todayStr(), loggedAt: new Date().toISOString(), userId: uid
         });
+
+        // [GAMIFICATION] Credit points for maintaining nutrition logs
+        await pointsManager.awardPoints(uid, totalCalories, "MEAL");
 
         showMsg('meal-success', `${mealType} logged — ${totalCalories} kcal.`);
         typeEl.value = ''; portionEl.value = ''; caloriesEl.value = '';
