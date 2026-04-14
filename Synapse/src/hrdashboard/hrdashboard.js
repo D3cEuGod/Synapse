@@ -1,4 +1,5 @@
 import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+// Author: Aristidis Maximilian Karidis 230507748
 
 export async function userCanAccessHRDashboard(db, user){
     if (!user) return false;
@@ -24,12 +25,18 @@ async function getSelfAssessments(db, startDate, endDate) {
 
   const averageScore = total > 0 ? filtered.reduce((sum, a) => sum + (a.totalScore || 0), 0) / total : 0;
 
-  //const highRiskCount = filtered.filter(a => a.riskLevel==="high").length;
+  const riskCounts = filtered.reduce((counts, a) => {
+    if (a.riskLevel === "low") counts.low++;
+    else if (a.riskLevel === "medium") counts.medium++;
+    else if (a.riskLevel === "high") counts.high++;
+    else if (a.riskLevel === "very-high") counts.veryHigh++;
+    return counts;
+  }, { low: 0, medium: 0, high: 0, veryHigh: 0 });
 
   return {
     totalSelfAssessments: total,
-    averageScore: Number(averageScore.toFixed(2))
-    //highRiskCount
+    averageScore: Number(averageScore.toFixed(2)),
+    riskCounts
   };
 }
 
@@ -58,11 +65,61 @@ async function getMoodStats(db, startDate, endDate){
     };
 }
 
+async function getPointsStats(db, startDate, endDate) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+
+  const transactionsSnap = await getDocs(collection(db, "pointsTransactions"));
+  const redemptionsSnap = await getDocs(collection(db, "redemptions"));
+  const accountsSnap = await getDocs(collection(db, "pointsAccount"));
+
+  const transactions = transactionsSnap.docs.map(doc => doc.data());
+  const redemptions = redemptionsSnap.docs.map(doc => doc.data());
+  const accounts = accountsSnap.docs.map(doc => doc.data());
+
+  const filteredTransactions = transactions.filter(t => {
+    if (!t.timestamp) return false;
+    const date = t.timestamp.toDate();
+    return date >= start && date <= end;
+  });
+
+  const filteredRedemptions = redemptions.filter(r => {
+    if (!r.redemptionDate) return false;
+    const date = r.redemptionDate.toDate();
+    return date >= start && date <= end;
+  });
+
+  const totalPointsEarned = filteredTransactions.reduce(
+    (sum, t) => sum + (t.pointsChange || 0), 0
+  );
+
+  const totalPointsRedeemed = filteredRedemptions.reduce(
+    (sum, r) => sum + (r.pointsSpent || 0), 0
+  );
+
+  const averagePointsBalance = accounts.length > 0
+    ? accounts.reduce((sum, a) => sum + (a.currentBalance || 0), 0) / accounts.length
+    : 0;
+
+  const redemptionRate = totalPointsEarned > 0
+    ? (totalPointsRedeemed / totalPointsEarned) * 100
+    : null;
+
+  return {
+    totalPointsEarned,
+    totalPointsRedeemed,
+    averagePointsBalance: Number(averagePointsBalance.toFixed(2)),
+    redemptionRate: redemptionRate !== null ? Number(redemptionRate.toFixed(1)) : null
+  };
+}
+
 export async function getHRDashboard(db, startDate, endDate){
-    const [selfAssessmentStats, moodStats] = await Promise.all([
+    const [selfAssessmentStats, moodStats, pointsStats] = await Promise.all([
         getSelfAssessments(db, startDate, endDate),
-        getMoodStats(db, startDate, endDate)
+        getMoodStats(db, startDate, endDate),
+        getPointsStats(db, startDate, endDate)
     ]);
 
-    return { selfAssessmentStats, moodStats };
+    return { selfAssessmentStats, moodStats, pointsStats };
 }
