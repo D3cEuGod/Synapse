@@ -1,6 +1,11 @@
 import { auth } from "./firebase-config.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
+// Added Firestore imports (doc, getDoc, setDoc, serverTimestamp)
+import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+// Added db import from firebase-config
+import { db } from "./firebase-config.js";
+
 function injectHeader() {
     const headerEl = document.getElementById("app-header");
     if (!headerEl) return;
@@ -34,12 +39,28 @@ function injectHeader() {
     });
 }
 
+// Added this NEW function to auto-create points account if it doesn't exist
+
+async function ensurePointsAccount(userId) {
+    const accountRef = doc(db, "pointsAccount", userId);
+    const accountSnap = await getDoc(accountRef);
+    if (!accountSnap.exists()) {
+        await setDoc(accountRef, {
+            currentBalance: 0,
+            lifetimePoints: 0,
+            createdAt: serverTimestamp()
+        });
+    }
+}
+
 export function initAppShell() {
     injectHeader();
 
     return new Promise((resolve) => {
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
+                //Added this line to call ensurePointsAccount
+                await ensurePointsAccount(user.uid);
                 document.getElementById("nav-email").innerText = user.email;
                 document.getElementById("view-loading").classList.add("hidden");
                 const appView = document.getElementById("view-app");

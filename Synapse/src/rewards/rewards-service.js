@@ -4,11 +4,25 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 import { db } from "../firebase-config.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-const currentAccountId = "bAPwy5Lx4Wdet0xhaJwC859pKs23";
 
+let currentUserId = null;
 
+const auth = getAuth();
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUserId = user.uid;
+        initRewardsPage();
+    } else {
+        window.location.href = "login.html";
+    }
+});
+
+// Checks if user has HR or Admin role, shows Manage Rewards button if yes
 async function checkHRStatus(userId) {
+    if (!userId) return;
+    
     const userDoc = await getDoc(doc(db, "users", userId));
 
     if (!userDoc.exists()) return;
@@ -20,20 +34,33 @@ async function checkHRStatus(userId) {
     }
 }
 
-
+// Sets up all real-time listeners for the rewards page
 function initRewardsPage() {
-    if (!currentAccountId) return;
+    if (!currentUserId) return;
 
-    checkHRStatus(currentAccountId);
-    const accountRef = doc(db, "pointsAccount", currentAccountId);
+    checkHRStatus(currentUserId);
+    const accountRef = doc(db, "pointsAccount", currentUserId);
 
     onSnapshot(accountRef, (docSnap) => {
         if (!docSnap.exists()) return;
 
         const data = docSnap.data();
 
+        // 1. Update Current Balance
         const balanceEl = document.getElementById("current-balance-display");
-        if (balanceEl) balanceEl.innerText = `${data.currentBalance} Points`;
+        if (balanceEl) balanceEl.innerText = `${data.currentBalance || 0} Points`;
+
+        // 2. [GAMIFICATION] Update Lifetime Points
+        // We find the paragraph that contains the text "Lifetime Points"
+        const lifetimeContainer = document.querySelector('p.text-sm.text-gray-500.mt-4');
+        if (lifetimeContainer) {
+            lifetimeContainer.innerHTML = `
+                Lifetime Points: ${data.lifetimePoints || 0} 
+                <i data-lucide="star" class="w-3 h-3 text-[#5f9f87]"></i>
+            `;
+            // Re-render the star icon
+            if (window.lucide) lucide.createIcons();
+        }
 
         document.getElementById('view-loading')?.classList.add('hidden');
         document.getElementById('view-app')?.classList.remove('hidden');
@@ -43,7 +70,7 @@ function initRewardsPage() {
     
     const txQuery = query(
         collection(db, "pointsTransactions"),
-        where("accountId", "==", currentAccountId),
+        where("accountId", "==", currentUserId),
         orderBy("timestamp", "desc"),
         limit(10)
     );
@@ -100,7 +127,7 @@ function initRewardsPage() {
     });
 }
 
-
+// Renders the transaction history sidebar from Firestore data
 function renderHistorySidebar(docs) {
     const container = document.getElementById("history-timeline-container");
     if (!container) return;
@@ -143,8 +170,14 @@ function renderHistorySidebar(docs) {
     });
 }
 
+// Processes the reward claim - deducts points, creates voucher/entitlement/redemption records
 async function claimReward(rewardData) {
-    const accountRef = doc(db, "pointsAccount", currentAccountId);
+    if (!currentUserId) {
+        alert("You must be logged in!");
+        return;
+    }
+    
+    const accountRef = doc(db, "pointsAccount", currentUserId);
 
     let donationTarget = null;
 
@@ -163,7 +196,7 @@ async function claimReward(rewardData) {
         await runTransaction(db, async (transaction) => {
 
             const entitlementDocId =
-                `${currentAccountId}_${rewardData.entitlement_type}`;
+                `${currentUserId}_${rewardData.entitlement_type}`;
 
             const entRef = doc(db, "Entitlements", entitlementDocId);
 
@@ -187,7 +220,7 @@ async function claimReward(rewardData) {
             const redemptionRef = doc(collection(db, "redemptions"));
 
             transaction.set(redemptionRef, {
-                accountId: currentAccountId,
+                accountId: currentUserId,
                 rewardId: rewardData.rewardId, 
                 pointsSpent: rewardData.pointsCost,
                 redemptionDate: serverTimestamp(),
@@ -203,7 +236,7 @@ async function claimReward(rewardData) {
 
             
             transaction.set(txRef, {
-                accountId: currentAccountId,
+                accountId: currentUserId,
                 pointsChange: -rewardData.pointsCost,
                 source: "REWARD_REDEMPTION",
                 reward_name: rewardData.reward_name, 
@@ -217,7 +250,7 @@ async function claimReward(rewardData) {
                 const voucherRef = doc(collection(db, "vouchers"));
 
                 transaction.set(voucherRef, {
-                    accountId: currentAccountId,
+                    accountId: currentUserId,
                     rewardId: rewardData.rewardId,
                     reward_name: rewardData.reward_name,
                     voucherCode:
@@ -237,7 +270,7 @@ async function claimReward(rewardData) {
                     });
                 } else {
                     transaction.set(entRef, {
-                        accountId: currentAccountId,
+                        accountId: currentUserId,
                         reward_name: rewardData.reward_name,
                         entitlement_type: rewardData.entitlement_type,
                         totalQuantity: 1,
@@ -262,10 +295,15 @@ async function claimReward(rewardData) {
 }
 
 
-
+// Listens for clicks on claim buttons and triggers the claim process
 document.addEventListener("click", (e) => {
     const btn = e.target.closest(".claim-btn");
     if (!btn) return;
+
+    if (!currentUserId) {
+        alert("Please log in first!");
+        return;
+    }
 
     claimReward({
         rewardId: btn.dataset.id, 
@@ -276,5 +314,3 @@ document.addEventListener("click", (e) => {
     });
 });
 
-
-document.addEventListener("DOMContentLoaded", initRewardsPage);

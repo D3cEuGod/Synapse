@@ -2,15 +2,28 @@ import {
     collection, query, where, onSnapshot, doc, runTransaction, serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { db } from "../firebase-config.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-const currentAccountId = "bAPwy5Lx4Wdet0xhaJwC859pKs23";
 
+let currentUserId = null;
+
+const auth = getAuth();
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUserId = user.uid;
+        initRedemptionsPage();
+    } else {
+        window.location.href = "login.html";
+    }
+});
+
+// Sets up real-time listeners for vouchers and entitlements
 function initRedemptionsPage() {
-    if (!currentAccountId) return;
+    if (!currentUserId) return;
 
     const voucherQuery = query(
         collection(db, "vouchers"),
-        where("accountId", "==", currentAccountId),
+        where("accountId", "==", currentUserId),
         where("status", "==", "ACTIVE")
     );
 
@@ -21,7 +34,7 @@ function initRedemptionsPage() {
 
     const entitlementQuery = query(
         collection(db, "Entitlements"), 
-        where("accountId", "==", currentAccountId)
+        where("accountId", "==", currentUserId)
     );
 
     onSnapshot(entitlementQuery, (snapshot) => {
@@ -29,7 +42,7 @@ function initRedemptionsPage() {
     });
 }
 
-
+// Checks each voucher for expiry date, marks as EXPIRED if past due date
 function handleExpiry(docs) {
     const now = new Date();
 
@@ -47,8 +60,13 @@ function handleExpiry(docs) {
     });
 }
 
-
+// Marks a voucher as USED when user clicks "Use now"
 async function useVoucher(voucherId, code) {
+    if (!currentUserId) {
+        alert("You must be logged in!");
+        return;
+    }
+    
     const confirmUse = confirm(`Voucher code: ${code}\n\nMark this as used?`);
 
     if (!confirmUse) return;
@@ -69,7 +87,13 @@ async function useVoucher(voucherId, code) {
     }
 }
 
+// Consumes one day of entitlement when user clicks "Mark Used"
 async function useEntitlement(entId, name) {
+    if (!currentUserId) {
+        alert("You must be logged in!");
+        return;
+    }
+    
     const confirmUse = confirm(`Use one ${name} now?\n\nThis will reduce your balance by 1 day.`);
 
     if (!confirmUse) return;
@@ -95,11 +119,14 @@ async function useEntitlement(entId, name) {
                 updatedAt: serverTimestamp()
             });
         });
+        
+        alert(`Successfully used 1 ${name}!`);
 
     } catch (e) {
         alert("Error: " + e.message);
     }
 }
+
 
 function renderVouchers(docs) {
     const container = document.getElementById("vouchers-list");
@@ -186,4 +213,3 @@ function renderEntitlements(docs) {
 window.handleUseVoucher = useVoucher;
 window.handleUseEntitlement = useEntitlement;
 
-document.addEventListener("DOMContentLoaded", initRedemptionsPage);

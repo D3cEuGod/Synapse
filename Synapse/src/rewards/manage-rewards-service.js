@@ -1,16 +1,33 @@
+
 import { 
-    collection, doc, updateDoc, onSnapshot, getDoc  
+    collection, doc, updateDoc, onSnapshot, getDoc, setDoc  
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 import { db } from "../firebase-config.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 
-const currentAccountId = "bAPwy5Lx4Wdet0xhaJwC859pKs23";
+const auth = getAuth();
+let currentUserId = null;  
+
+// Waits for user to log in, then initializes the HR management page
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUserId = user.uid;  
+        initManageRewards(currentUserId);  
+    } else {
+        window.location.href = "login.html";
+    }
+});
+
 
 let rewardsData = [];
 let redemptionsData = [];
 
+// Checks if the logged-in user has HR or Admin permissions
 async function checkHRStatus(userId) {
+    if (!userId) return false;
+    
     const userDoc = await getDoc(doc(db, "users", userId));
 
     if (!userDoc.exists()) {
@@ -32,10 +49,12 @@ async function checkHRStatus(userId) {
     return true;  
 }
 
-
-export async function initManageRewards() {
-    const isHR = await checkHRStatus(currentAccountId);
+// Checks HR status, loads rates, sets up listeners
+export async function initManageRewards(userId) {  
+    const isHR = await checkHRStatus(userId);  
     if (!isHR) return;  
+
+    await loadEarningRates();  
 
     onSnapshot(collection(db, "rewards"), (snapshot) => {
         rewardsData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -48,7 +67,7 @@ export async function initManageRewards() {
     });
 }
 
-
+// Renders table and analytics, hides loading spinner
 function updateUI() {
     renderAdminTable(rewardsData);
     calculateCatalogueStats(rewardsData, redemptionsData);
@@ -59,6 +78,7 @@ function updateUI() {
     if (window.lucide) lucide.createIcons();
 }
 
+// Renders the rewards table with editable point cost inputs and save buttons
 function renderAdminTable(rewards) {
     const container = document.getElementById("admin-rewards-list");
     if (!container) return;
@@ -97,6 +117,7 @@ function renderAdminTable(rewards) {
     });
 }
 
+// Calculates and displays catalogue stats: total rewards, avg cost, most claimed
 function calculateCatalogueStats(rewards, redemptions) {
     const totalEl = document.getElementById("stat-total-rewards");
     const avgEl = document.getElementById("stat-avg-cost");
@@ -137,6 +158,7 @@ function calculateCatalogueStats(rewards, redemptions) {
     }
 }
 
+// Saves updated point cost for a reward to Firestore after validation
 async function processUpdate(id) {
     const inputEl = document.getElementById(`input-${id}`);
     if (!inputEl) return;
@@ -160,4 +182,78 @@ async function processUpdate(id) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", initManageRewards);
+// --- EARNING RATES FUNCTIONS ---
+
+// Loads global earning rates from Firestore and populates the input fields
+async function loadEarningRates() {
+    const configRef = doc(db, "systemConfig", "pointsSettings");
+    try {
+        const snap = await getDoc(configRef);
+        if (snap.exists()) {
+            const data = snap.data();
+            
+            if (document.getElementById('hr-step-rate')) 
+                document.getElementById('hr-step-rate').value = data.STEP_LOG_BASE || 100;
+            if (document.getElementById('hr-activity-bonus')) 
+                document.getElementById('hr-activity-bonus').value = data.ACTIVITY_BONUS || 10;
+            if (document.getElementById('hr-meal-bonus')) 
+                document.getElementById('hr-meal-bonus').value = data.MEAL_BONUS || 20;
+            if (document.getElementById('hr-mood-bonus')) 
+                document.getElementById('hr-mood-bonus').value = data.MOOD_BONUS || 15;
+        }
+    } catch (e) {
+        console.error("Error loading rates:", e);
+    }
+}
+
+// Listens for click on Save Global Rates button, validates inputs, saves to Firestore
+document.addEventListener("click", async (e) => {
+    if (e.target.closest("#update-rates-btn")) {
+        
+        
+        const stepRate = Number(document.getElementById('hr-step-rate')?.value || 100);
+        const activityBonus = Number(document.getElementById('hr-activity-bonus')?.value || 10);
+        const mealBonus = Number(document.getElementById('hr-meal-bonus')?.value || 20);
+        const moodBonus = Number(document.getElementById('hr-mood-bonus')?.value || 15);
+        
+        if (stepRate < 1) {
+            alert("Steps per point must be at least 1");
+            return;
+        }
+        if (activityBonus < 0) {
+            alert("Workout bonus cannot be negative");
+            return;
+        }
+        if (mealBonus < 0) {
+            alert("Meal bonus cannot be negative");
+            return;
+        }
+        if (moodBonus < 0) {
+            alert("Mood check bonus cannot be negative");
+            return;
+        }
+        
+        
+        if (isNaN(stepRate) || isNaN(activityBonus) || isNaN(mealBonus) || isNaN(moodBonus)) {
+            alert("Please enter valid numbers in all fields");
+            return;
+        }
+        
+        const configRef = doc(db, "systemConfig", "pointsSettings");
+        
+        const newRates = {
+            STEP_LOG_BASE: stepRate,
+            ACTIVITY_BONUS: activityBonus,
+            MEAL_BONUS: mealBonus,
+            MOOD_BONUS: moodBonus
+        };
+
+        try {
+            await setDoc(configRef, newRates, { merge: true });
+            alert("Success: Global earning rates updated!");
+        } catch (e) {
+            console.error("Error saving rates:", e);
+            alert("Failed to save rates.");
+        }
+    }
+});

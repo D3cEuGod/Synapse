@@ -6,6 +6,7 @@
     <title>Synapse - Physical Wellbeing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <style>.hidden { display: none !important; }</style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
@@ -197,6 +198,10 @@
         collection, query, where, getDocs, orderBy, deleteDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // [GAMIFICATION] Import the points manager to bridge physical activity with rewards
+    import { PointsManager } from "./src/rewards/PointsManager.js";
+    const pointsManager = new PointsManager();
+
     const firebaseConfig = {
         apiKey: "AIzaSyDloPoJ6z-gNgv9bSIGUjrTNh48ZLvrPHo",
         authDomain: "synapse21.firebaseapp.com",
@@ -299,6 +304,11 @@
             lastModified: new Date().toISOString(),
             userId: uid
         });
+
+        // [GAMIFICATION] Calculate and credit points based on daily steps
+        await pointsManager.awardPoints(uid, steps, "STEPS_LOG");
+
+
         showMsg('step-success', `Steps saved: ${steps.toLocaleString()} / ${goal.toLocaleString()}`);
         updateSummary();
     });
@@ -386,6 +396,9 @@
             userId: uid
         });
 
+        // [GAMIFICATION] Award fixed points for completing a workout session
+        await pointsManager.awardPoints(uid, 1, "ACTIVITY");
+
         showMsg('activity-success', `${activityType} logged — ${caloriesBurned} kcal burned.`);
         document.getElementById('activity-type').value = '';
         document.getElementById('activity-duration').value = '';
@@ -455,6 +468,9 @@
             loggedAt: new Date().toISOString(),
             userId: uid
         });
+
+        // [GAMIFICATION] Credit points for maintaining nutrition logs
+        await pointsManager.awardPoints(uid, totalCalories, "MEAL");
 
         showMsg('meal-success', `${mealType} logged — ${totalCalories} kcal.`);
         document.getElementById('meal-type').value = '';

@@ -85,6 +85,47 @@
             
         </div>
     </div>
+
+    <section class="mt-12 bg-gray-800/60 p-6 rounded-xl border border-gray-700 shadow-xl">
+    <div class="flex items-center gap-2 mb-6">
+        <div class="bg-emerald-500/10 p-2 rounded-lg">
+            <i data-lucide="trending-up" class="text-[#5f9f87] w-5 h-5"></i>
+        </div>
+        <div>
+            <h2 class="text-lg font-bold text-gray-100">Global Earning Rates</h2>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest font-medium">Configure how users earn points</p>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="space-y-2">
+            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Steps per 1 Point</label>
+            <input type="number" id="hr-step-rate" placeholder="e.g. 100" 
+                class="w-full bg-gray-900 border border-gray-700 p-3 rounded-lg text-white focus:border-[#5f9f87] focus:ring-1 focus:ring-[#5f9f87] outline-none text-sm transition-all shadow-inner">
+        </div>
+        <div class="space-y-2">
+            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Workout Bonus</label>
+            <input type="number" id="hr-activity-bonus" placeholder="e.g. 10" 
+                class="w-full bg-gray-900 border border-gray-700 p-3 rounded-lg text-white focus:border-[#5f9f87] focus:ring-1 focus:ring-[#5f9f87] outline-none text-sm transition-all shadow-inner">
+        </div>
+        <div class="space-y-2">
+            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Meal Log Bonus</label>
+            <input type="number" id="hr-meal-bonus" placeholder="e.g. 20" 
+                class="w-full bg-gray-900 border border-gray-700 p-3 rounded-lg text-white focus:border-[#5f9f87] focus:ring-1 focus:ring-[#5f9f87] outline-none text-sm transition-all shadow-inner">
+        </div>
+        <div class="space-y-2">
+            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mood Check-in Bonus</label>
+            <input type="number" id="hr-mood-bonus" placeholder="e.g. 15" 
+                class="w-full bg-gray-900 border border-gray-700 p-3 rounded-lg text-white focus:border-[#5f9f87] focus:ring-1 focus:ring-[#5f9f87] outline-none text-sm transition-all shadow-inner">
+        </div>
+    </div>
+
+    <div class="mt-8 pt-6 border-t border-gray-700/50 flex justify-end">
+        <button id="update-rates-btn" class="bg-[#5f9f87] hover:bg-emerald-600 text-white px-8 py-2.5 rounded-lg font-bold transition-all flex items-center gap-2 text-xs uppercase tracking-widest shadow-lg shadow-emerald-900/20">
+            <i data-lucide="save" class="w-4 h-4"></i> Save Global Rates
+        </button>
+    </div>
+</section>
 </main>
     </div>
 
