@@ -399,7 +399,7 @@
             if (filteredSlots.length === 0) {
                 slotsList.innerHTML = `
                     <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
-                        No available slots found.
+                        No slots found.
                     </div>
                 `;
                 return;
@@ -464,7 +464,7 @@
             if (myRequests.length === 0) {
                 myRequestsList.innerHTML = `
                     <div class="rounded-lg border border-dashed border-gray-600 p-8 text-center text-gray-400">
-                        You have not submitted any support requests yet.
+                        You have not submitted any requests yet.
                     </div>
                 `;
                 return;
@@ -479,6 +479,17 @@
                             <p class="text-sm text-gray-400">${request.startTime} - ${request.endTime}</p>
                             <p class="text-sm text-gray-300 mt-2">${request.message || "No message provided."}</p>
                             <p class="text-xs mt-2 ${getStatusClass(request.status)}">Status: ${request.status}</p>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            ${request.status === "PENDING" ? `
+                                <button
+                                    class="cancel-request-btn px-4 py-2 rounded-lg border border-red-700 text-red-300 hover:bg-red-900/30 text-sm transition-colors"
+                                    data-request-id="${request.id}"
+                                >
+                                    Cancel Request
+                                </button>
+                            ` : ""}
                         </div>
                     </div>
                 </div>
@@ -595,6 +606,7 @@
                     const data = docSnap.data();
                     requests.push({
                         id: docSnap.id,
+                        slotId: data.slotId || "",
                         ambassadorName: data.ambassadorName || "Unknown Ambassador",
                         date: data.date || "",
                         startTime: data.startTime || "",
@@ -665,6 +677,39 @@
             }
         }
 
+        async function cancelPendingRequest(requestId) {
+            const request = myRequests.find(item => item.id === requestId);
+
+            if (!request) {
+                showMessage("Request not found.", "error");
+                return;
+            }
+
+            if (request.status !== "PENDING") {
+                showMessage("Only pending requests can be cancelled.", "error");
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "supportRequests", requestId), {
+                    status: "CANCELLED"
+                });
+
+                if (request.slotId) {
+                    await updateDoc(doc(db, "availabilitySlots", request.slotId), {
+                        status: "AVAILABLE"
+                    });
+                }
+
+                showMessage("Request cancelled.");
+                await loadAvailableSlots();
+                await loadMyRequests();
+            } catch (error) {
+                console.error(error);
+                showMessage("Could not cancel request.", "error");
+            }
+        }
+
         function bindEvents() {
             document.getElementById("logout-btn").addEventListener("click", async () => {
                 await signOut(auth);
@@ -691,10 +736,17 @@
 
             document.getElementById("request-form").addEventListener("submit", submitSupportRequest);
 
-            document.addEventListener("click", (event) => {
-                const button = event.target.closest(".select-slot-btn");
-                if (!button) return;
-                setSelectedSlot(button.dataset.slotId);
+            document.addEventListener("click", async (event) => {
+                const selectButton = event.target.closest(".select-slot-btn");
+                if (selectButton) {
+                    setSelectedSlot(selectButton.dataset.slotId);
+                    return;
+                }
+
+                const cancelRequestButton = event.target.closest(".cancel-request-btn");
+                if (cancelRequestButton) {
+                    await cancelPendingRequest(cancelRequestButton.dataset.requestId);
+                }
             });
         }
 
