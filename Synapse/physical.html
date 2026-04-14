@@ -6,7 +6,10 @@
     <title>Synapse - Physical Wellbeing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>.hidden { display: none !important; }</style>
+    <style>
+        .hidden { display: none !important; }
+        .input-error { border-color: #ef4444 !important; }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased min-h-screen flex flex-col">
 
@@ -279,25 +282,27 @@
 
     // save or overwrite today's step entry (same doc id = same day = edit behaviour)
     document.getElementById('save-steps-btn').addEventListener('click', async () => {
-        const steps = parseInt(document.getElementById('step-input').value);
+        const stepsEl = document.getElementById('step-input');
+        const steps = parseInt(stepsEl.value);
         const goal = parseInt(document.getElementById('step-goal-input').value) || 10000;
 
+        stepsEl.classList.remove('input-error');
+
         if (isNaN(steps) || steps < 0) {
+            stepsEl.classList.add('input-error');
             showMsg('step-error', 'Please enter a valid step count (must be 0 or more).', true);
             return;
         }
         if (steps > 200000) {
+            stepsEl.classList.add('input-error');
             showMsg('step-error', 'Step count seems too high. Please check your entry.', true);
             return;
         }
 
         const ref = doc(db, 'users', uid, 'stepEntries', todayStr());
         await setDoc(ref, {
-            steps,
-            goal,
-            date: todayStr(),
-            lastModified: new Date().toISOString(),
-            userId: uid
+            steps, goal, date: todayStr(),
+            lastModified: new Date().toISOString(), userId: uid
         });
         showMsg('step-success', `Steps saved: ${steps.toLocaleString()} / ${goal.toLocaleString()}`);
         updateSummary();
@@ -324,17 +329,17 @@
             return;
         }
         container.innerHTML = activityEntries.map(e => `
-                <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
-                    <div>
-                        <span class="font-medium text-sm text-white capitalize">${e.activityType}</span>
-                        <span class="text-xs text-gray-400 ml-2">${e.durationMins} min · ${e.weightKg}kg</span>
-                        <span class="text-xs text-orange-400 ml-2">${e.caloriesBurned} kcal burned</span>
-                    </div>
-                    <button onclick="deleteActivity('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+            <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
+                <div>
+                    <span class="font-medium text-sm text-white capitalize">${e.activityType}</span>
+                    <span class="text-xs text-gray-400 ml-2">${e.durationMins} min · ${e.weightKg}kg</span>
+                    <span class="text-xs text-orange-400 ml-2">${e.caloriesBurned} kcal burned</span>
                 </div>
-            `).join('');
+                <button onclick="deleteActivity('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `).join('');
         lucide.createIcons();
     }
 
@@ -364,32 +369,35 @@
         document.getElementById(id).addEventListener('input', updateCaloriePreview);
     });
 
-    // validate and save a new activity entry to firestore
+    // log activity - highlights the invalid fields red
     document.getElementById('log-activity-btn').addEventListener('click', async () => {
-        const activityType = document.getElementById('activity-type').value;
-        const durationMins = parseFloat(document.getElementById('activity-duration').value);
-        const weightKg = parseFloat(document.getElementById('activity-weight').value);
+        const typeEl = document.getElementById('activity-type');
+        const durationEl = document.getElementById('activity-duration');
+        const weightEl = document.getElementById('activity-weight');
 
-        if (!activityType) { showMsg('activity-error', 'Please select an activity type.', true); return; }
-        if (!durationMins || durationMins <= 0) { showMsg('activity-error', 'Please enter a valid duration (greater than 0).', true); return; }
-        if (!weightKg || weightKg < 20) { showMsg('activity-error', 'Please enter a valid weight (minimum 20kg).', true); return; }
+        typeEl.classList.remove('input-error');
+        durationEl.classList.remove('input-error');
+        weightEl.classList.remove('input-error');
+
+        const activityType = typeEl.value;
+        const durationMins = parseFloat(durationEl.value);
+        const weightKg = parseFloat(weightEl.value);
+
+        let hasError = false;
+        if (!activityType) { typeEl.classList.add('input-error'); hasError = true; }
+        if (!durationMins || durationMins <= 0) { durationEl.classList.add('input-error'); hasError = true; }
+        if (!weightKg || weightKg < 20) { weightEl.classList.add('input-error'); hasError = true; }
+
+        if (hasError) { showMsg('activity-error', 'Please fill in all fields correctly.', true); return; }
 
         const caloriesBurned = calcCaloriesBurned(activityType, durationMins, weightKg);
-
         await addDoc(collection(db, 'users', uid, 'activityEntries'), {
-            activityType,
-            durationMins,
-            weightKg,
-            caloriesBurned,
-            date: todayStr(),
-            loggedAt: new Date().toISOString(),
-            userId: uid
+            activityType, durationMins, weightKg, caloriesBurned,
+            date: todayStr(), loggedAt: new Date().toISOString(), userId: uid
         });
 
         showMsg('activity-success', `${activityType} logged — ${caloriesBurned} kcal burned.`);
-        document.getElementById('activity-type').value = '';
-        document.getElementById('activity-duration').value = '';
-        document.getElementById('activity-weight').value = '';
+        typeEl.value = ''; durationEl.value = ''; weightEl.value = '';
         document.getElementById('activity-calories-preview').classList.add('hidden');
         await loadActivities();
         updateSummary();
@@ -416,17 +424,17 @@
             return;
         }
         container.innerHTML = mealEntries.map(e => `
-                <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
-                    <div>
-                        <span class="font-medium text-sm text-white">${e.mealType}</span>
-                        <span class="text-xs text-gray-400 ml-2">${e.portion} portion</span>
-                        <span class="text-xs text-blue-400 ml-2">${e.totalCalories} kcal</span>
-                    </div>
-                    <button onclick="deleteMeal('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
+            <div class="flex justify-between items-center bg-gray-900 rounded-lg px-4 py-3 border border-gray-700">
+                <div>
+                    <span class="font-medium text-sm text-white">${e.mealType}</span>
+                    <span class="text-xs text-gray-400 ml-2">${e.portion} portion</span>
+                    <span class="text-xs text-blue-400 ml-2">${e.totalCalories} kcal</span>
                 </div>
-            `).join('');
+                <button onclick="deleteMeal('${e.id}')" class="text-gray-600 hover:text-red-500 transition-colors ml-4">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `).join('');
         lucide.createIcons();
     }
 
@@ -438,28 +446,34 @@
     };
 
     // validate and save a new meal entry to firestore
+    // log meal - highlights invalid fields red
     document.getElementById('log-meal-btn').addEventListener('click', async () => {
-        const mealType = document.getElementById('meal-type').value;
-        const portion = document.getElementById('meal-portion').value;
-        const totalCalories = parseInt(document.getElementById('meal-calories').value);
+        const typeEl = document.getElementById('meal-type');
+        const portionEl = document.getElementById('meal-portion');
+        const caloriesEl = document.getElementById('meal-calories');
 
-        if (!mealType) { showMsg('meal-error', 'Please select a meal type.', true); return; }
-        if (!portion) { showMsg('meal-error', 'Please select a portion size.', true); return; }
-        if (isNaN(totalCalories) || totalCalories < 0) { showMsg('meal-error', 'Please enter a valid calorie amount (0 or more).', true); return; }
+        typeEl.classList.remove('input-error');
+        portionEl.classList.remove('input-error');
+        caloriesEl.classList.remove('input-error');
+
+        const mealType = typeEl.value;
+        const portion = portionEl.value;
+        const totalCalories = parseInt(caloriesEl.value);
+
+        let hasError = false;
+        if (!mealType) { typeEl.classList.add('input-error'); hasError = true; }
+        if (!portion) { portionEl.classList.add('input-error'); hasError = true; }
+        if (isNaN(totalCalories) || totalCalories < 0) { caloriesEl.classList.add('input-error'); hasError = true; }
+
+        if (hasError) { showMsg('meal-error', 'Please fill in all fields correctly.', true); return; }
 
         await addDoc(collection(db, 'users', uid, 'mealEntries'), {
-            mealType,
-            portion,
-            totalCalories,
-            date: todayStr(),
-            loggedAt: new Date().toISOString(),
-            userId: uid
+            mealType, portion, totalCalories,
+            date: todayStr(), loggedAt: new Date().toISOString(), userId: uid
         });
 
         showMsg('meal-success', `${mealType} logged — ${totalCalories} kcal.`);
-        document.getElementById('meal-type').value = '';
-        document.getElementById('meal-portion').value = '';
-        document.getElementById('meal-calories').value = '';
+        typeEl.value = ''; portionEl.value = ''; caloriesEl.value = '';
         await loadMeals();
         updateSummary();
     });
