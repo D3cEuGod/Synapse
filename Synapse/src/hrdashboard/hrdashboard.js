@@ -1,6 +1,7 @@
 import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 // Author: Aristidis Maximilian Karidis 230507748
 
+// Function to check if the user has the necessary access role (HR_Member or Administrator) to view the HR Dashboard
 export async function userCanAccessHRDashboard(db, user){
     if (!user) return false;
 
@@ -13,6 +14,7 @@ export async function userCanAccessHRDashboard(db, user){
     return roles.includes("Administrator") || roles.includes("HR_Member");
 }
 
+// Fetches the self assessments data
 async function getSelfAssessments(db, startDate, endDate) {
   const snapshot = await getDocs(collection(db, "selfAssessments"));
   const assessments = snapshot.docs.map(doc => doc.data());
@@ -40,6 +42,7 @@ async function getSelfAssessments(db, startDate, endDate) {
   };
 }
 
+//Fetches the mood stats data
 async function getMoodStats(db, startDate, endDate){
     const snapshot = await getDocs(collection(db, "moodEntries"));
     const moodEntries = snapshot.docs.map(doc => doc.data());
@@ -65,10 +68,13 @@ async function getMoodStats(db, startDate, endDate){
     };
 }
 
+//Fetches the gamification stats data
 async function getPointsStats(db, startDate, endDate) {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  end.setHours(23, 59, 59, 999);
+  // Parse as local-time dates to avoid UTC-midnight off-by-one errors
+  const [sy, sm, sd] = startDate.split("-").map(Number);
+  const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+  const [ey, em, ed] = endDate.split("-").map(Number);
+  const end = new Date(ey, em - 1, ed, 23, 59, 59, 999);
 
   const transactionsSnap = await getDocs(collection(db, "pointsTransactions"));
   const redemptionsSnap = await getDocs(collection(db, "redemptions"));

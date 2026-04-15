@@ -1,5 +1,6 @@
 //Author: Aristidis Maximilian Karidis 230507748
 
+//Function to export the whole report (including charts) as PDF using jsPDF, excludes N/A data and charts
 export async function exportReportAsPDF(report) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
@@ -132,6 +133,7 @@ export async function exportReportAsPDF(report) {
     pdf.save(`hr_analytics_${start}_to_${end}.pdf`);
 }
 
+// Function to export all the data in the report as CSV excluding N/A data
 export function exportReportAsCSV(report){
     const start = document.getElementById("start-date").value;
     const end = document.getElementById("end-date").value;
@@ -180,5 +182,6 @@ export function exportReportAsCSV(report){
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
 }

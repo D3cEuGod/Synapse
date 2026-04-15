@@ -1,4 +1,4 @@
-import { db } from "../shared/firebase-config.js";
+import { db } from "../firebase-config.js";
 import {
   collection,
   addDoc,
@@ -78,12 +78,9 @@ export async function createNotification({
 
 export async function markNotificationAsRead(notificationId) {
   try {
-    console.log("Trying to mark as read:", notificationId);
-
     const notificationRef = doc(db, "notifications", notificationId);
     await updateDoc(notificationRef, { isRead: true });
 
-    console.log("Marked as read successfully:", notificationId);
     return true;
   } catch (error) {
     console.error("Error marking notification as read:", error);

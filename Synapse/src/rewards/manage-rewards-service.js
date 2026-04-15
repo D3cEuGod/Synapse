@@ -165,8 +165,8 @@ async function processUpdate(id) {
 
     const newVal = Number(inputEl.value);
 
-    if (isNaN(newVal) || newVal < 0) {
-        alert("Invalid amount");
+    if (isNaN(newVal) || newVal <= 0) {
+        alert("Invalid amount — cost must be greater than zero.");
         return;
     }
 

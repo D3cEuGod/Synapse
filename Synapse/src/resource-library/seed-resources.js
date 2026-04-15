@@ -1,4 +1,4 @@
-import { db } from "../shared/firebase-config.js";
+import { db } from "../firebase-config.js";
 import { collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { resourceSeedData } from "./resource-seed-data.js";
 

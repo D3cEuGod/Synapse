@@ -1,5 +1,5 @@
-import { 
-    collection, query, where, onSnapshot, doc, runTransaction, serverTimestamp 
+import {
+    collection, query, where, onSnapshot, doc, runTransaction, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { db } from "../firebase-config.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -17,7 +17,13 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Sets up real-time listeners for vouchers and entitlements
+// Escapes a string for safe use inside a double-quoted HTML attribute
+function escapeAttr(str) {
+    return String(str).replace(/"/g, "&quot;");
+}
+
+// Sets up real-time listeners for vouchers and entitlements, and attaches
+// delegated click handlers on the static container elements once.
 function initRedemptionsPage() {
     if (!currentUserId) return;
 
@@ -28,18 +34,38 @@ function initRedemptionsPage() {
     );
 
     onSnapshot(voucherQuery, (snapshot) => {
-        handleExpiry(snapshot.docs); 
+        handleExpiry(snapshot.docs);
         renderVouchers(snapshot.docs);
     });
 
     const entitlementQuery = query(
-        collection(db, "Entitlements"), 
+        collection(db, "Entitlements"),
         where("accountId", "==", currentUserId)
     );
 
     onSnapshot(entitlementQuery, (snapshot) => {
         renderEntitlements(snapshot.docs);
     });
+
+    // Delegated listener for voucher "Use now" buttons
+    const voucherContainer = document.getElementById("vouchers-list");
+    if (voucherContainer) {
+        voucherContainer.addEventListener("click", (e) => {
+            const btn = e.target.closest(".use-voucher-btn");
+            if (!btn) return;
+            useVoucher(btn.dataset.voucherId, btn.dataset.voucherCode);
+        });
+    }
+
+    // Delegated listener for entitlement "Mark Used" buttons
+    const entitlementContainer = document.getElementById("entitlements-list");
+    if (entitlementContainer) {
+        entitlementContainer.addEventListener("click", (e) => {
+            const btn = e.target.closest(".use-entitlement-btn");
+            if (!btn) return;
+            useEntitlement(btn.dataset.entId, btn.dataset.entName);
+        });
+    }
 }
 
 // Checks each voucher for expiry date, marks as EXPIRED if past due date
@@ -66,7 +92,7 @@ async function useVoucher(voucherId, code) {
         alert("You must be logged in!");
         return;
     }
-    
+
     const confirmUse = confirm(`Voucher code: ${code}\n\nMark this as used?`);
 
     if (!confirmUse) return;
@@ -93,7 +119,7 @@ async function useEntitlement(entId, name) {
         alert("You must be logged in!");
         return;
     }
-    
+
     const confirmUse = confirm(`Use one ${name} now?\n\nThis will reduce your balance by 1 day.`);
 
     if (!confirmUse) return;
@@ -119,7 +145,7 @@ async function useEntitlement(entId, name) {
                 updatedAt: serverTimestamp()
             });
         });
-        
+
         alert(`Successfully used 1 ${name}!`);
 
     } catch (e) {
@@ -136,8 +162,8 @@ function renderVouchers(docs) {
         const d = docSnap.data();
         const expiryDate = d.expiryDate ? d.expiryDate.toDate() : null;
 
-        const expiryString = expiryDate 
-            ? expiryDate.toLocaleDateString("en-GB", { day: 'numeric', month: 'short' }) 
+        const expiryString = expiryDate
+            ? expiryDate.toLocaleDateString("en-GB", { day: 'numeric', month: 'short' })
             : "No expiry";
 
         return `
@@ -152,8 +178,10 @@ function renderVouchers(docs) {
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="handleUseVoucher('${docSnap.id}', '${d.voucherCode}')" 
-                        class="bg-[#177a64] hover:bg-[#115e4c] text-white text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase transition-colors flex items-center gap-1">
+                <button
+                        data-voucher-id="${docSnap.id}"
+                        data-voucher-code="${escapeAttr(d.voucherCode)}"
+                        class="use-voucher-btn bg-[#177a64] hover:bg-[#115e4c] text-white text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase transition-colors flex items-center gap-1">
                     <i data-lucide="external-link" class="w-3 h-3"></i> Use now
                 </button>
                 <span class="text-[10px] bg-red-900/30 text-red-400 px-2 py-1.5 rounded border border-red-800/50 font-bold whitespace-nowrap">
@@ -180,7 +208,6 @@ function renderEntitlements(docs) {
 
         if (remaining <= 0) return null;
 
-        
         const dayLabel = remaining === 1 ? "day" : "days";
 
         return `
@@ -195,8 +222,10 @@ function renderEntitlements(docs) {
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="handleUseEntitlement('${docSnap.id}', '${d.reward_name}')" 
-                        class="bg-[#177a64] hover:bg-[#115e4c] text-white text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase transition-colors flex items-center gap-1">
+                <button
+                        data-ent-id="${docSnap.id}"
+                        data-ent-name="${escapeAttr(d.reward_name || 'Benefit')}"
+                        class="use-entitlement-btn bg-[#177a64] hover:bg-[#115e4c] text-white text-[10px] px-3 py-1.5 rounded-lg font-bold uppercase transition-colors flex items-center gap-1">
                     <i data-lucide="check-circle" class="w-3 h-3"></i> Mark Used
                 </button>
             </div>
@@ -207,9 +236,3 @@ function renderEntitlements(docs) {
 
     if (window.lucide) lucide.createIcons();
 }
-
-
-
-window.handleUseVoucher = useVoucher;
-window.handleUseEntitlement = useEntitlement;
-

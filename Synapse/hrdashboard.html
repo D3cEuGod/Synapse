@@ -484,6 +484,17 @@
       const reportError = document.getElementById("report-error");
       reportError.classList.add("hidden");
 
+      if (!startDate || !endDate) {
+        reportError.textContent = "Please enter both a start date and an end date.";
+        reportError.classList.remove("hidden");
+        return;
+      }
+      if (startDate > endDate) {
+        reportError.textContent = "Start date must be on or before end date.";
+        reportError.classList.remove("hidden");
+        return;
+      }
+
       let report;
       try {
         report = await getHRDashboard(db, startDate, endDate);
@@ -562,10 +573,8 @@
 
       renderPointsActivityChart(report.pointsStats);
 
-      // Only show export when at least one section has sufficient data
-      const hasData = report.selfAssessmentStats.totalSelfAssessments >= ANONYMITY_THRESHOLD ||
-                      report.moodStats.totalMoodEntries >= ANONYMITY_THRESHOLD;
-      exportSection.classList.toggle("hidden", !hasData);
+      // Gamification data is always present, so export is always available after a load
+      exportSection.classList.remove("hidden");
     }
   
     document.getElementById("load-report-btn").addEventListener("click", loadReport);
