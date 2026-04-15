@@ -362,19 +362,19 @@
         lucide.createIcons();
 
         /* ============================================================
-           QUESTIONNAIRE DATA
+           QUESTIONNAIRE DATA (Updated to match Resource Categories)
         ============================================================ */
         window.QUESTIONS = [
-            { id: "q1", text: "How often have you felt overwhelmed by your workload?", category: "stress" },
-            { id: "q2", text: "How often have you had difficulty concentrating on your tasks?", category: "focus" },
-            { id: "q3", text: "How often have you felt anxious or worried about work?", category: "anxiety" },
-            { id: "q4", text: "How often have you felt emotionally exhausted or burned out?", category: "burnout" },
-            { id: "q5", text: "How often have you had difficulty sleeping because of work-related stress?", category: "sleep" },
-            { id: "q6", text: "How often have you felt a lack of motivation or interest in your work?", category: "motivation" },
-            { id: "q7", text: "How often have you felt isolated or disconnected from your colleagues?", category: "connection" },
-            { id: "q8", text: "How often have you experienced physical symptoms of stress (e.g. headaches, muscle tension, fatigue)?", category: "physical" },
-            { id: "q9", text: "How often have you felt unable to take proper breaks during the working day?", category: "balance" },
-            { id: "q10", text: "How often have you felt that work is negatively affecting your personal life or relationships?", category: "balance" }
+            { id: "q1", text: "How often have you felt overwhelmed by your workload?", category: "Stress" },
+            { id: "q2", text: "How often have you had difficulty concentrating on your tasks?", category: "Mindfulness" },
+            { id: "q3", text: "How often have you felt anxious or worried about work?", category: "Mental Health" },
+            { id: "q4", text: "How often have you felt emotionally exhausted or burned out?", category: "Workplace Support" },
+            { id: "q5", text: "How often have you had difficulty sleeping because of work-related stress?", category: "Sleep" },
+            { id: "q6", text: "How often have you felt a lack of motivation or interest in your work?", category: "Mental Health" },
+            { id: "q7", text: "How often have you felt isolated or disconnected from your colleagues?", category: "Workplace Support" },
+            { id: "q8", text: "How often have you experienced physical symptoms of stress (e.g. headaches, muscle tension, fatigue)?", category: "Fitness" },
+            { id: "q9", text: "How often have you felt unable to take proper breaks during the working day?", category: "Workplace Support" },
+            { id: "q10", text: "How often have you felt that work is negatively affecting your personal life or relationships?", category: "Stress" }
         ];
 
         const SCORE_OPTIONS = [
@@ -385,8 +385,16 @@
         ];
 
         window.MODULE_CATALOGUE = [
-            { id: "GEN001", title: "General Wellbeing Resources", category: "general", description: "A collection of general tips and guides for maintaining a healthy mind.", icon: "book" },
-            { id: "GEN002", title: "Introduction to Workplace Support", category: "general", description: "Learn about the basics of seeking support and balancing your workload.", icon: "info" }
+            { id: "RES001", title: "Stress - Every Mind Matters", type: "Article", category: "Stress", description: "Practical advice on symptoms of stress, common causes, and ways to manage it.", url: "https://www.nhs.uk/every-mind-matters/mental-health-issues/stress/", icon: "file-text" },
+            { id: "RES002", title: "Work-related stress", type: "Article", category: "Workplace Support", description: "Guidance on recognising pressure at work and preventing it from becoming harmful stress.", url: "https://www.nhs.uk/every-mind-matters/lifes-challenges/work-related-stress/", icon: "file-text" },
+            { id: "RES003", title: "Mental wellbeing tips", type: "Module", category: "Mental Health", description: "A practical mental wellbeing hub with structured self-help tips for stress, anxiety, and sleep.", url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/", icon: "book-open" },
+            { id: "RES004", title: "Top tips to improve mental wellbeing", type: "Article", category: "Mental Health", description: "Simple habits and reflection techniques to improve day-to-day mental wellbeing.", url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/top-tips-to-improve-your-mental-wellbeing/", icon: "file-text" },
+            { id: "RES005", title: "Fall asleep faster and sleep better", type: "Module", category: "Sleep", description: "Sleep hygiene guidance including routines, relaxation, mindfulness, and environmental adjustments.", url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/how-to-fall-asleep-faster-and-sleep-better/", icon: "book-open" },
+            { id: "RES006", title: "How can meditation help with sleep?", type: "Video", category: "Mindfulness", description: "Meditation-based sleep support including guided meditation, breathing, and muscle relaxation.", url: "https://www.nhs.uk/every-mind-matters/mental-wellbeing-tips/how-to-fall-asleep-faster-and-sleep-better/how-can-meditation-help-with-sleep/", icon: "video" },
+            { id: "RES007", title: "How to cope with stress at work", type: "Article", category: "Workplace Support", description: "Advice on workload, work-life balance, support gaps, and stress management at work.", url: "https://www.mind.org.uk/information-support/tips-for-everyday-living/how-to-be-mentally-healthy-at-work/work-and-stress/", icon: "file-text" },
+            { id: "RES008", title: "Managing stress and building resilience", type: "Module", category: "Stress", description: "Stress-management and resilience-building techniques for coping under pressure.", url: "https://www.mind.org.uk/information-support/types-of-mental-health-problems/stress/managing-stress-and-building-resilience/", icon: "book-open" },
+            { id: "RES009", title: "5 Ways to Wellbeing", type: "Article", category: "Mental Health", description: "A workplace-friendly framework for maintaining wellbeing through daily habits and connection.", url: "https://www.mind.org.uk/workplace/my-mental-health-at-work/five-ways-to-wellbeing/", icon: "file-text" },
+            { id: "RES010", title: "Physical activity", type: "Article", category: "Fitness", description: "WHO guidance on the physical and mental health benefits of regular physical activity.", url: "https://www.who.int/news-room/fact-sheets/detail/physical-activity", icon: "file-text" }
         ];
 
         function getRiskLevel(score) {
@@ -715,13 +723,20 @@
             window.QUESTIONS.forEach(q => {
                 categoryScores[q.category] = (categoryScores[q.category] || 0) + (responses[q.id] || 0);
             });
+            
+            // Get top scoring categories matching exactly the case in our data
             const topCategories = Object.entries(categoryScores)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 3)
-                .map(e => e[0]);
+                .map(e => e[0].toLowerCase());
 
-            const recommendedModules = window.MODULE_CATALOGUE.filter(m => topCategories.includes(m.category)).slice(0, 3);
-            if (recommendedModules.length === 0) recommendedModules.push(...window.MODULE_CATALOGUE.slice(0, 2));
+            let recommendedModules = window.MODULE_CATALOGUE.filter(m => topCategories.includes(m.category.toLowerCase())).slice(0, 3);
+            
+            // Fallback padding if we don't find 3 matching modules (prevents duplicates)
+            if (recommendedModules.length < 3) {
+                const extra = window.MODULE_CATALOGUE.filter(m => !recommendedModules.some(rm => rm.id === m.id));
+                recommendedModules.push(...extra.slice(0, 3 - recommendedModules.length));
+            }
 
             try {
                 const assessRef = await addDoc(collection(db, 'selfAssessments'), {
@@ -795,7 +810,7 @@
 
             const modContainer = document.getElementById('recommended-modules');
             modContainer.innerHTML = modules.map(mod => `
-                <div class="flex items-center space-x-3 p-3 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#5f9f87] transition-colors">
+                <div class="flex items-center space-x-3 p-3 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#5f9f87] transition-colors cursor-pointer" onclick="window.open('${mod.url}', '_blank')">
                     <div class="p-2 bg-[#177a64]/20 rounded-lg flex-shrink-0">
                         <i data-lucide="${mod.icon}" class="w-4 h-4 text-[#5f9f87]"></i>
                     </div>
@@ -803,7 +818,7 @@
                         <p class="text-sm font-semibold text-white truncate">${mod.title}</p>
                         <p class="text-xs text-gray-400 mt-0.5">${mod.description}</p>
                     </div>
-                    <a href="resources.html" class="flex-shrink-0 text-xs text-[#5f9f87] hover:text-[#8ee4d2] font-medium">View →</a>
+                    <a href="${mod.url}" target="_blank" class="flex-shrink-0 text-xs text-[#5f9f87] hover:text-[#8ee4d2] font-medium">View →</a>
                 </div>
             `).join('');
 
@@ -824,7 +839,7 @@
         };
 
         /* ============================================================
-           INSIGHTS TAB LOGIC
+           INSIGHTS TAB LOGIC (Client-Side Sorting to prevent Index errors)
         ============================================================ */
         window.loadInsights = async function() {
             const today = new Date();
@@ -848,7 +863,7 @@
             document.getElementById('stat-avg-mood').textContent = moodCount > 0 ? (moodSum / moodCount).toFixed(1) : '—';
             document.getElementById('stat-checkins').textContent = moodCount;
 
-            // --- 1. ASSESSMENTS HISTORY (With Pagination) ---
+            // --- 1. ASSESSMENTS HISTORY (With Pagination & Client-side sort to bypass index errors) ---
             const assessQ = query(
                 collection(db, 'selfAssessments'),
                 where('employeeId', '==', currentUser.uid)
@@ -872,7 +887,7 @@
                 
                 histList.innerHTML = assessments.map((data, index) => {
                     const risk = getRiskLevel(data.totalScore);
-                    const hiddenClass = index >= 4 ? 'hidden hidden-assessment' : ''; // Hide items after the 4th
+                    const hiddenClass = index >= 4 ? 'hidden hidden-assessment' : ''; 
                     return `
                         <div class="flex items-center justify-between p-3 bg-gray-900 border border-gray-700 rounded-xl ${hiddenClass}">
                             <div>
@@ -905,7 +920,7 @@
                 }
             }
 
-            // --- 2. RECOMMENDATIONS HISTORY ---
+            // --- 2. RECOMMENDATIONS HISTORY (With Deduplication & Client-side sort to bypass index errors) ---
             const recoQ = query(
                 collection(db, 'recommendations'),
                 where('employeeId', '==', currentUser.uid)
@@ -914,10 +929,8 @@
             
             let allRecommendations = [];
             recoSnap.forEach(d => allRecommendations.push(d.data()));
-            // Sort by newest first
             allRecommendations.sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt));
 
-            // Deduplicate: Because it is sorted by newest first, the Set will only keep the most recent instance of each module
             const seenModules = new Set();
             const uniqueRecommendations = [];
 
@@ -935,7 +948,7 @@
                 recoList.innerHTML = uniqueRecommendations.slice(0, 5).map(data => {
                     const mod = window.MODULE_CATALOGUE.find(m => m.id === data.moduleId);
                     return `
-                        <div class="flex items-center space-x-3 p-3 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#5f9f87] transition-colors cursor-pointer" onclick="window.location.href='resources.html'">
+                        <div class="flex items-center space-x-3 p-3 bg-gray-900 border border-gray-700 rounded-xl hover:border-[#5f9f87] transition-colors cursor-pointer" onclick="window.open('${mod ? mod.url : 'resources.html'}', '_blank')">
                             <div class="p-2 bg-[#177a64]/20 rounded-lg flex-shrink-0">
                                 <i data-lucide="${mod ? mod.icon : 'book'}" class="w-4 h-4 text-[#5f9f87]"></i>
                             </div>
