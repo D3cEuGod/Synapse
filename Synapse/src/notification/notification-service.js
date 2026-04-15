@@ -80,7 +80,7 @@ export async function markNotificationAsRead(notificationId) {
   try {
     console.log("Trying to mark as read:", notificationId);
 
-    const notificationRef = doc(window.db, "notifications", notificationId);
+    const notificationRef = doc(db, "notifications", notificationId);
     await updateDoc(notificationRef, { isRead: true });
 
     console.log("Marked as read successfully:", notificationId);

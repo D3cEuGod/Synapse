@@ -248,6 +248,10 @@
             updateDoc,
             serverTimestamp
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import {
+            notifyBookingRequestMade,
+            notifyBookingCancelledByEmployee
+        } from "./src/notification/booking-notifications.js";
 
         // Configuration
         const firebaseConfig = {
@@ -279,40 +283,7 @@
         const upcomingSessionsList = document.getElementById("upcoming-sessions-list");
         const searchInput = document.getElementById("search-input");
         const dateInput = document.getElementById("date-input");
-        const selectedSlotDisplay = document.getElementById("selected-slot-display");
-
-        // Inline Notification Functions (Replaces the broken local import)
-        async function notifyBookingRequestMade(data) {
-            try {
-                await addDoc(collection(db, "notifications"), {
-                    type: "BOOKING_REQUEST",
-                    recipientId: data.ambassadorId, // Notify the ambassador
-                    title: "New Booking Request",
-                    message: `${data.employeeName} has requested a session on ${data.date} at ${data.startTime}.`,
-                    createdAt: serverTimestamp(),
-                    read: false,
-                    data: data
-                });
-            } catch (error) {
-                console.error("Failed to send booking notification:", error);
-            }
-        }
-
-        async function notifyBookingCancelledByEmployee(data) {
-            try {
-                await addDoc(collection(db, "notifications"), {
-                    type: "BOOKING_CANCELLED",
-                    recipientId: data.ambassadorId, // Notify the ambassador
-                    title: "Booking Cancelled",
-                    message: `${data.employeeName} has cancelled their session request for ${data.date} at ${data.startTime}.`,
-                    createdAt: serverTimestamp(),
-                    read: false,
-                    data: data
-                });
-            } catch (error) {
-                console.error("Failed to send cancellation notification:", error);
-            }
-        }
+        const selectedSlotDisplay = document.getElementById("selected-slot-display")
 
         // Utility Functions
         function showMessage(message, type = "success") {

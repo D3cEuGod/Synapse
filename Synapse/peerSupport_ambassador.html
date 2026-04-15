@@ -238,7 +238,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import {
           notifySessionScheduled,
-          notifyBookingDeclined
+          notifyBookingDeclined,
+          notifyBookingCancelledByAmbassador
         } from "./src/notification/booking-notifications.js";
         import {
             getAuth,
@@ -933,6 +934,15 @@
 
                 await updateDoc(doc(db, "availabilitySlots", slotId), {
                     status: "AVAILABLE"
+                });
+
+                await notifyBookingCancelledByAmbassador({
+                    employeeId: relatedRequest.employeeId,
+                    ambassadorId: currentUser.uid,
+                    ambassadorName: getDisplayName(currentUserProfile, currentUser.email),
+                    date: relatedRequest.date,
+                    startTime: relatedRequest.startTime,
+                    endTime: relatedRequest.endTime
                 });
 
                 showMessage("Session cancelled.");
